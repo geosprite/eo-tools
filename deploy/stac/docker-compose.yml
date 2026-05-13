@@ -1,0 +1,40 @@
+services:
+  database:
+    image: ghcr.io/stac-utils/pgstac:v0.9.8
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: postgis
+      PGUSER: username
+      PGPASSWORD: password
+      PGDATABASE: postgis
+    ports:
+      - "${PGSTAC_PORT:-5439}:5432"
+    command: postgres -N 500
+    volumes:
+      - pgstac-data:/var/lib/postgresql/data
+
+  app:
+    image: ghcr.io/stac-utils/stac-fastapi-pgstac:latest
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8082
+      ENVIRONMENT: local
+      PGUSER: username
+      PGPASSWORD: password
+      PGDATABASE: postgis
+      PGHOST: database
+      PGPORT: 5432
+      WEB_CONCURRENCY: 2
+      DB_MIN_CONN_SIZE: 1
+      DB_MAX_CONN_SIZE: 4
+      USE_API_HYDRATE: "${USE_API_HYDRATE:-false}"
+      ENABLE_TRANSACTIONS_EXTENSIONS: "TRUE"
+    ports:
+      - "${STAC_API_PORT:-8082}:8082"
+    depends_on:
+      - database
+    command: bash -c "scripts/wait-for-it.sh database:5432 && python -m stac_fastapi.pgstac.app"
+
+volumes:
+  pgstac-data:
