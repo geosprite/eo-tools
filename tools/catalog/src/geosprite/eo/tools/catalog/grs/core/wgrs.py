@@ -1,6 +1,6 @@
 from shapely.geometry import Polygon, GeometryCollection
 
-from ..grid import SpatialGridSystem, Batch
+from .grid import SpatialGridSystem, Batch
 
 __all__ = ["WGRS"]
 
