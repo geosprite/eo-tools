@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eo-tools-snap"
+version = "0.1.0"
+description = "SNAP and Sentinel-1 preprocessing tools for Earth Observation Tools."
+authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "eo-tools-kernel>=0.1.0",
+    "aria2p[tui]",
+    "eo-stac>=0.1.0",
+    "eo-store",
+    "GDAL",
+]
+
+[project.urls]
+Organization = "https://github.com/geosprite"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/geosprite"]

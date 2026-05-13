@@ -1,0 +1,21 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eo-tools-kernel"
+version = "0.1.0"
+description = "Core tool protocol, context and registry for Earth Observation Tools."
+authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.5",
+]
+
+[project.urls]
+Organization = "https://github.com/geosprite"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/geosprite"]

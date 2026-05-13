@@ -1,0 +1,30 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eo-tools-catalog"
+version = "0.1.0"
+description = "Catalog, STAC search and spatial grid tools for Earth Observation Tools."
+authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "eo-tools-kernel>=0.1.0",
+    "eo-stac>=0.1.0",
+    "planetary-computer",
+    "pystac~=1.12.2",
+    "pystac-client",
+    "shapely",
+]
+
+[project.urls]
+Organization = "https://github.com/geosprite"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/geosprite"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"src/geosprite/eo/tools/catalog/core/grs/mgrs/etc/mgrs.sqlite" = "geosprite/eo/tools/catalog/core/grs/mgrs/etc/mgrs.sqlite"
+"src/geosprite/eo/tools/catalog/core/grs/wrs2/etc/wrs2.sqlite" = "geosprite/eo/tools/catalog/core/grs/wrs2/etc/wrs2.sqlite"
