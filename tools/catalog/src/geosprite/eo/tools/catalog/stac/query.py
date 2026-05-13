@@ -5,7 +5,6 @@
 
 from dataclasses import dataclass
 
-
 @dataclass
 class Query:
     """Base STAC Query class."""

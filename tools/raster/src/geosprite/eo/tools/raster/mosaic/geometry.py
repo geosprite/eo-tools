@@ -7,7 +7,6 @@ from osgeo import ogr
 from shapely.geometry import shape, Polygon, GeometryCollection
 from shapely.geometry.base import BaseGeometry
 
-
 def read(geojson: str | dict) -> GeometryCollection | None:
 
     if isinstance(geojson, dict) or isinstance(geojson, str):

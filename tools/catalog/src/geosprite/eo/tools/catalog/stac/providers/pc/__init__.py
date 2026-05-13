@@ -1,21 +1,16 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 from typing import List, Dict
+
 from pystac import Asset
 
-from ...provider import Provider
 from ...client import StacClient
-from ...item import Item
-from ...query import Query
 from ...collection import CollectionRegistry
+from ...item import Item
+from .landsat import LandsatCollection
+from .modis import ModisCollection
+from ...provider import Provider
+from ...query import Query
 from .sentinel1 import Sen1Collection
 from .sentinel2 import Sen2Collection
-from .modis import ModisCollection
-from .landsat import LandsatCollection
-
 
 __all__ = ["PlanetaryComputerProvider"]
 

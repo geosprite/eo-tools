@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from geosprite.eo.tools.catalog.grs import SpatialGrid
-from geosprite.eo.tools import Tool, ToolContext
 from pydantic import BaseModel, Field
+
+from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools.catalog.grs import SpatialGrid
 
 from .common import DictResultOut
 from .registry import catalog_tool
-
 
 class SpatialTilesIn(BaseModel):
     system: Literal["mgrs", "wgrs", "wrs2"] = Field(description="Spatial grid system.")

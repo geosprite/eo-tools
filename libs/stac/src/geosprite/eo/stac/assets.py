@@ -59,16 +59,13 @@ class Asset(BaseModel):
         return self.href
 
 
-class AssetCollection(BaseModel):
-    """A lightweight ordered group of assets.
+def asset_to_stac_dict(asset: Asset) -> dict[str, Any]:
+    """Serialize an Asset and flatten extra_fields into STAC extension fields."""
 
-    Keep this only where a tool needs collection-level metadata. If there is no
-    collection metadata, tools can return ``list[Asset]`` directly.
-    """
-
-    items: list[Asset]
-    cache_key: str | None = None
-    metadata: dict[str, Any] = Field(default_factory=dict)
+    data = asset.model_dump(by_alias=True, exclude_none=True)
+    extra = data.pop("extra_fields", None) or {}
+    data.update(extra)
+    return data
 
 
-__all__ = ["Asset", "AssetCollection", "DEFAULT_MEDIA_TYPE"]
+__all__ = ["Asset", "DEFAULT_MEDIA_TYPE", "asset_to_stac_dict"]

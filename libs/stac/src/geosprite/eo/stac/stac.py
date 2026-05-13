@@ -4,13 +4,9 @@ Prefer importing from ``geosprite.eo.stac`` or ``geosprite.eo.stac.items`` in
 new code.
 """
 
-from .items import Item, ItemCollection, Link, StacFeature, StacFeatureCollection, StacLink
+from .items import Item, ItemCollection
 
 __all__ = [
-    "Link",
     "Item",
     "ItemCollection",
-    "StacLink",
-    "StacFeature",
-    "StacFeatureCollection",
 ]

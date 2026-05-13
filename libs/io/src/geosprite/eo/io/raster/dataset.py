@@ -3,12 +3,13 @@
 # Author: Jia Song
 #
 
-import os
-import numpy as np
-from dataclasses import dataclass
-from typing import Tuple, List, Optional, Union
-from osgeo import gdal, osr
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
+import os
+from typing import Tuple, List, Optional, Union
+
+import numpy as np
+from osgeo import gdal, osr
 
 gdal.UseExceptions()
 

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List, Optional, Type
-from shapely.geometry import GeometryCollection, shape
 
+from shapely.geometry import GeometryCollection, shape
 
 def load_geom(geojson: str | dict) -> GeometryCollection | None:
     """Load geometry from GeoJSON string or dict."""

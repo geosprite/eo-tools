@@ -11,7 +11,6 @@ from geosprite.eo.tools import Tool, ToolContext
 from .registry import catalog_tool
 from .stac_api import GenericStacApiClient
 
-
 class PublishCollectionIn(BaseModel):
     stac_url: str = Field(description="Target STAC API root URL, for example http://localhost:8080.")
     collection: Collection | None = Field(default=None, description="Complete STAC Collection payload.")

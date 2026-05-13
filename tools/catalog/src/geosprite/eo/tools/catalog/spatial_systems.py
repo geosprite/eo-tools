@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from geosprite.eo.tools.catalog.grs import SpatialGridFactory
-from geosprite.eo.tools import Tool, ToolContext
 from pydantic import BaseModel
 
-from .registry import catalog_tool
+from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools.catalog.grs import SpatialGridFactory
 
+from .registry import catalog_tool
 
 class SpatialSystemsIn(BaseModel):
     pass

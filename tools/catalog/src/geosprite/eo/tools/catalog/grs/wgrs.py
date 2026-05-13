@@ -1,12 +1,6 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 from shapely.geometry import Polygon, GeometryCollection
 
 from ..grid import SpatialGridSystem, Batch
-
 
 __all__ = ["WGRS"]
 

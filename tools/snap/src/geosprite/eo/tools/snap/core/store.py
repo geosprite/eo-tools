@@ -3,14 +3,13 @@
 # Author: Jia Song
 #
 
+from functools import wraps
 import os
 from pathlib import Path
-from urllib.parse import urljoin
-from functools import wraps
 from typing import Callable
+from urllib.parse import urljoin
 
 from geosprite.eo.tools.snap.core.ingest import Aria2Manager
-
 
 def config_parser(conf_file: str):
     import warnings

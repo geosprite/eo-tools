@@ -2,6 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel, Field
+
+from geosprite.eo.tools import ToolContext
+
+from ..common import BaseRasterTool, raster_asset
 from .core import (
     CommonExtent,
     RasterItem,
@@ -11,12 +16,7 @@ from .core import (
     prepare_item_for_crop,
     publish_crop_files,
 )
-from geosprite.eo.tools import ToolContext
-from pydantic import BaseModel, Field
-
-from ..common import BaseRasterTool, raster_asset_collection
 from ..registry import raster_tool
-
 
 class CropItemPayload(BaseModel):
     name: str = Field(description="Logical item name used as the item key in results")
@@ -75,11 +75,11 @@ def _extent_payload(extent: CommonExtent) -> dict[str, Any]:
     }
 
 
-def _asset_collection(urls: dict[str, str]) -> dict[str, Any]:
-    return raster_asset_collection(
-        list(urls.values()),
-        metadata={"bands": list(urls.keys())},
-    ).model_dump(mode="json")
+def _assets(urls: dict[str, str]) -> list[dict[str, Any]]:
+    return [
+        raster_asset(url, title=band, band=band).model_dump(mode="json")
+        for band, url in urls.items()
+    ]
 
 
 @raster_tool
@@ -109,6 +109,6 @@ class CropItemToExtentTool(BaseRasterTool):
                 "time_key": inputs.time_key,
                 "output_folder": crop_output_url(inputs.spatial_key, inputs.time_key),
                 "extent": _extent_payload(extent),
-                "assets": _asset_collection(urls_by_item[item.name]),
+                "assets": _assets(urls_by_item[item.name]),
             }
         )

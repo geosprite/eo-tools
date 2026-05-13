@@ -1,15 +1,20 @@
 from __future__ import annotations
 
-import threading
-import time
-import traceback
-import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import os
+import threading
+import time
+import traceback
 from typing import Any
+import uuid
+
+from pydantic import BaseModel, Field
 
 from geosprite.eo.jobs import JobState, JobStatus
+from geosprite.eo.tools import ToolContext
+
+from ..common import BaseRasterTool, raster_asset
 from .core import (
     RasterItem,
     crop_group_to_intersection,
@@ -18,10 +23,6 @@ from .core import (
     prepare_items_for_crop,
     publish_crop_files,
 )
-from geosprite.eo.tools import ToolContext
-from pydantic import BaseModel, Field
-
-from ..common import BaseRasterTool, raster_asset_collection
 from ..registry import raster_tool
 
 _MAX_WORKERS = int(os.environ.get("EARTH_RASTER_CROP_MAX_WORKERS", "2"))
@@ -76,12 +77,12 @@ def _extent_payload(extent) -> dict[str, Any]:
     }
 
 
-def _asset_collections_by_item(urls_by_item: dict[str, dict[str, str]]) -> dict[str, Any]:
+def _assets_by_item(urls_by_item: dict[str, dict[str, str]]) -> dict[str, Any]:
     return {
-        item_name: raster_asset_collection(
-            list(urls.values()),
-            metadata={"bands": list(urls.keys())},
-        ).model_dump(mode="json")
+        item_name: [
+            raster_asset(url, title=band, band=band).model_dump(mode="json")
+            for band, url in urls.items()
+        ]
         for item_name, urls in urls_by_item.items()
     }
 
@@ -103,7 +104,7 @@ def _run_crop_to_intersection(inputs: CropToIntersectionJobIn) -> dict[str, Any]
         "time_key": result.time_key,
         "output_folder": crop_output_url(result.spatial_key, result.time_key),
         "extent": _extent_payload(result.extent),
-        "assets_by_item": _asset_collections_by_item(urls_by_item),
+        "assets_by_item": _assets_by_item(urls_by_item),
     }
 
 

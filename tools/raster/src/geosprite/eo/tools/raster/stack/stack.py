@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-from geosprite.eo.stac import Asset
-from geosprite.eo.tools import ToolContext
 from pydantic import BaseModel, Field
 
+from geosprite.eo.stac import Asset
+from geosprite.eo.tools import ToolContext
 from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
-from .core import stack_images
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
+from .core import stack_images
 from ..registry import raster_tool
-
 
 class RasterStackIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")

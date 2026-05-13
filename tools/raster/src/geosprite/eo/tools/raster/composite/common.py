@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 from numpy.typing import NDArray
+import numpy as np
 from osgeo import gdal
-
 
 def gdt_type(data: NDArray) -> int:
     data_dtype = data.dtype if isinstance(data, np.ndarray) else data

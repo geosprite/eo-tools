@@ -10,7 +10,6 @@ import logging
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
 
-
 @runtime_checkable
 class ToolContext(Protocol):
     """Per-invocation context. Implementations live in host services."""

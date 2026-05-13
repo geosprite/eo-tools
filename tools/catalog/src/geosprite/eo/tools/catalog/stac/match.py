@@ -31,7 +31,6 @@ from datetime import timedelta
 
 from shapely.geometry import shape as _shape
 
-
 def _overlap_ratio(geom_a: dict, geom_b: dict) -> float:
     """Return intersection_area / min(area_a, area_b); 0 if no overlap.
 

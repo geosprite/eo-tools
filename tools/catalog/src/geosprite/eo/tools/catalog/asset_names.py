@@ -3,12 +3,12 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from geosprite.eo.tools import Tool, ToolContext
 from pydantic import BaseModel, Field
+
+from geosprite.eo.tools import Tool, ToolContext
 
 from .common import DictResultOut, get_catalog_client
 from .registry import catalog_tool
-
 
 class AssetNamesIn(BaseModel):
     collection: str = Field(description="STAC collection name.")

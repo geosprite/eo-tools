@@ -4,17 +4,17 @@
 #
 
 from typing import List, Dict
+
 from pystac import Asset
 
-from ...provider import Provider
 from ...client import StacClient
-from ...item import Item
-from ...query import Query
 from ...collection import CollectionRegistry
-from .sentinel2 import Sen2Collection
-from .sentinel1 import Sen1Collection
+from ...item import Item
 from .landsat import LandsatCollection
-
+from ...provider import Provider
+from ...query import Query
+from .sentinel1 import Sen1Collection
+from .sentinel2 import Sen2Collection
 
 __all__ = ["Element84Provider"]
 

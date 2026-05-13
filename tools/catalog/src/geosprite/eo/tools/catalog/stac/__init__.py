@@ -1,16 +1,10 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 from typing import List, Optional
 
-from .item import Item
-from .query import Query
 from .client import StacClient
 from .collection import Collection, CollectionRegistry
+from .item import Item
 from .provider import Provider, ProviderFactory
-
+from .query import Query
 
 class Catalog:
     """STAC catalog that automatically selects appropriate provider.

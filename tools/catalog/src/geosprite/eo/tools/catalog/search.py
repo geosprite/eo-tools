@@ -11,7 +11,6 @@ from geosprite.eo.tools import Tool, ToolContext
 from .registry import catalog_tool
 from .stac_api import GenericStacApiClient
 
-
 class SearchStacIn(BaseModel):
     stac_url: str = Field(description="STAC API root URL.")
     collections: list[str] | None = None

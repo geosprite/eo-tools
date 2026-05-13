@@ -6,8 +6,8 @@ from typing import Any
 from pydantic import BaseModel
 
 from geosprite.eo.stac import Asset, DEFAULT_MEDIA_TYPE, Item, ItemCollection
-from geosprite.eo.tools.catalog.stac import Catalog
 
+from .stac import Catalog
 
 class DictResultOut(BaseModel):
     result: dict[str, Any]

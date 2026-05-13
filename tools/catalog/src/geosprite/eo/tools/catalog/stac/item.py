@@ -9,7 +9,6 @@ from typing import Any
 
 from pystac import Item as StacItem
 
-
 @dataclass
 class Item:
     """Base STAC Item class."""

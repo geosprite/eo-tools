@@ -1,13 +1,7 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 import os
 from typing import List, Optional
 
 from osgeo import gdal, ogr
-
 
 class VectorReader:
     """

@@ -1,11 +1,10 @@
+from datetime import datetime, timezone
 import os
 import re
 import tempfile
 import uuid
-from datetime import datetime, timezone
 
 from geosprite.eo.store import StoreClient
-
 
 _SAFE_PATH_RE = re.compile(r"[^A-Za-z0-9_.-/]+")
 

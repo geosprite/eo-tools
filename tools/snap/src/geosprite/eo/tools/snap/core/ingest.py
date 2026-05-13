@@ -8,7 +8,6 @@ from urllib.parse import urlparse
 
 import aria2p
 
-
 class Aria2Manager:
 
     def __init__(self, download_dir: str | None = None):

@@ -1,10 +1,9 @@
-import math
 from dataclasses import dataclass
+import math
 from typing import Iterable
 
 from shapely import bounds as geometry_bounds
 from shapely.geometry import box
-
 
 @dataclass(frozen=True)
 class RasterWindow:

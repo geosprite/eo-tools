@@ -9,7 +9,6 @@ from osgeo import gdal
 
 from geosprite.eo.io.raster import DatasetReader, write_cog
 
-
 __all__ = ["stack_images", "stack_images2rgb"]
 
 

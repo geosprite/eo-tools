@@ -10,7 +10,6 @@ import numpy as np
 
 from .dataset import RasterDataset, RasterProfile, SlidingWindow
 
-
 @dataclass
 class RasterSource:
     """Represents a raster file with its path, original size, and read scale."""

@@ -10,6 +10,7 @@ Requires ESA SNAP with snappy Python bindings
 
 import os
 from typing import List, Optional
+
 try:
     import numpy as np
 except ImportError:

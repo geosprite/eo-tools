@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 from geosprite.eo.io.raster import raster_info
 from geosprite.eo.tools import ToolContext
-from pydantic import BaseModel, Field
 
 from .common import BaseRasterTool
 from .registry import raster_tool
-
 
 class RasterInfoIn(BaseModel):
     input: str = Field(description="Local path, HTTP URL, S3 URL, or GDAL VSI path.")

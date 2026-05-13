@@ -5,11 +5,11 @@
 
 from abc import ABC, abstractmethod
 from typing import List, Dict, Any, Optional, Type
+
 from pystac import Asset
 
 from .item import Item
 from .query import Query
-
 
 class Provider(ABC):
     """Base interface for all STAC providers.

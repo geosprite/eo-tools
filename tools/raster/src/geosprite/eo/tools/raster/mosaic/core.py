@@ -9,7 +9,6 @@ from osgeo import gdal
 
 from .geometry import read, to_json
 
-
 __all__ = ["mosaic", "mosaic_json"]
 
 

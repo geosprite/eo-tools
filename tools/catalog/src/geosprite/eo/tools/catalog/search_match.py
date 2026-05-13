@@ -3,13 +3,13 @@ from __future__ import annotations
 import asyncio
 from typing import Any
 
-from geosprite.eo.tools.catalog.core.stac.match import match_across_collections
-from geosprite.eo.tools import Tool, ToolContext
 from pydantic import BaseModel, Field
+
+from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools.catalog.core.stac.match import match_across_collections
 
 from .common import get_catalog_client, item_to_feature
 from .registry import catalog_tool
-
 
 class CollectionIn(BaseModel):
     name: str

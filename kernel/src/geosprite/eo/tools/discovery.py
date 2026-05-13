@@ -6,10 +6,10 @@ scanning and ToolRegistry construction logic here.
 
 from __future__ import annotations
 
-import importlib
-import pkgutil
 from collections.abc import Iterable
+import importlib
 from pathlib import Path
+import pkgutil
 from typing import TypeVar
 
 from .registry import ToolRegistry

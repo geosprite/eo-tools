@@ -7,7 +7,6 @@ from typing import List, Tuple
 
 from osgeo import gdal, ogr
 
-
 class GeoTransformHelper:
     """
     Utility for converting between pixel coordinates and geographic coordinates

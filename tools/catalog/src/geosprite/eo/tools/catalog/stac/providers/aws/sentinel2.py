@@ -7,9 +7,9 @@ from dataclasses import dataclass
 
 from pystac import Item as StacItem
 
+from ...collection import Collection
 from ...item import Item
 from ...query import Query
-from ...collection import Collection
 
 __all__ = ['Item', 'Query', 'Sen2Collection']
 

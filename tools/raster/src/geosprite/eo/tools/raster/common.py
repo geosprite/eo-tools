@@ -4,10 +4,9 @@ import json
 import re
 from typing import Any, ClassVar
 
-from geosprite.eo.stac import Asset, AssetCollection
-from geosprite.eo.tools import Tool
+from geosprite.eo.stac import Asset
 from geosprite.eo.store import auto_minio_download
-
+from geosprite.eo.tools import Tool
 
 class BaseRasterTool(Tool):
     version: ClassVar[str] = "1.0.0"
@@ -45,17 +44,4 @@ def raster_asset(
         roles=[role],
         title=title,
         extra_fields={key: value for key, value in extra.items() if value is not None},
-    )
-
-
-def raster_asset_collection(
-    urls: list[str],
-    *,
-    cache_key: str | None = None,
-    metadata: dict[str, Any] | None = None,
-) -> AssetCollection:
-    return AssetCollection(
-        items=[raster_asset(url) for url in urls],
-        cache_key=cache_key,
-        metadata=metadata or {},
     )

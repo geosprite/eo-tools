@@ -2,12 +2,12 @@ from __future__ import annotations
 
 from typing import Any
 
-from geosprite.eo.stac import Asset, AssetCollection
-from geosprite.eo.tools import Tool, ToolContext
 from pydantic import BaseModel, Field
 
-from ..registry import snap_tool
+from geosprite.eo.stac import Asset
+from geosprite.eo.tools import Tool, ToolContext
 
+from ..registry import snap_tool
 
 class Sentinel1SnapIn(BaseModel):
     inputs: list[str] = Field(
@@ -19,10 +19,10 @@ class Sentinel1SnapIn(BaseModel):
 
 
 class Sentinel1SnapOut(BaseModel):
-    assets: AssetCollection = Field(description="Preprocessed VV/VH GeoTIFF assets.")
+    assets: list[Asset] = Field(description="Preprocessed VV/VH GeoTIFF assets.")
 
 
-def _assets_from_result(result: list[str] | dict[str, Any] | Any) -> AssetCollection:
+def _assets_from_result(result: list[str] | dict[str, Any] | Any) -> list[Asset]:
     if isinstance(result, list):
         urls = [str(item) for item in result]
     elif isinstance(result, dict):
@@ -31,18 +31,15 @@ def _assets_from_result(result: list[str] | dict[str, Any] | Any) -> AssetCollec
     else:
         urls = []
 
-    return AssetCollection(
-        items=[
-            Asset(
-                href=url,
-                title=url.rsplit("/", 1)[-1] or None,
-                roles=["data"],
-                extra_fields={"tool": "preprocess.sentinel1_snap"},
-            )
-            for url in urls
-        ],
-        metadata={"tool": "preprocess.sentinel1_snap"},
-    )
+    return [
+        Asset(
+            href=url,
+            title=url.rsplit("/", 1)[-1] or None,
+            roles=["data"],
+            extra_fields={"tool": "preprocess.sentinel1_snap"},
+        )
+        for url in urls
+    ]
 
 
 @snap_tool

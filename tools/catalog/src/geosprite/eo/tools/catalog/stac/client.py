@@ -4,11 +4,11 @@
 #
 
 from typing import Callable
+
 from pystac import Asset
 
 from .item import Item
 from .query import Query
-
 
 class StacClient:
     """Base STAC client for communicating with STAC APIs."""

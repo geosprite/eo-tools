@@ -1,7 +1,7 @@
+from dataclasses import dataclass, field
 import os
 import re
 import tempfile
-from dataclasses import dataclass, field
 
 from pyproj import Transformer
 from shapely import bounds, ops
@@ -14,7 +14,6 @@ from geosprite.eo.io.raster import (
     raster_info,
 )
 from geosprite.eo.store import StoreClient, auto_minio_download
-
 
 _SAFE_PATH_RE = re.compile(r"[^A-Za-z0-9_.-]+")
 def _empty_geometry():

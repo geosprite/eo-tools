@@ -9,9 +9,10 @@ from typing import List
 from pystac import Item as StacItem
 
 from geosprite.eo.tools.catalog.grs.mgrs.dao import MGRS
+
+from ...collection import Collection
 from ...item import Item
 from ...query import Query
-from ...collection import Collection
 
 __all__ = ['Item', 'Query', 'Sen1Collection']
 

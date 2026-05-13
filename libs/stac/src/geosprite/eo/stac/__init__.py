@@ -1,23 +1,26 @@
 """eo-stac: STAC asset and item models for Earth Observation Tools."""
 
-from .assets import DEFAULT_MEDIA_TYPE, Asset, AssetCollection
-from .builder import build_collection, build_item_from_assets, collection_to_stac_dict, item_to_stac_dict
-from .collections import Collection, Extent, SpatialExtent, TemporalExtent, collection_extent
-from .items import Item, ItemCollection, Link, StacFeature, StacFeatureCollection, StacLink
+from .assets import DEFAULT_MEDIA_TYPE, Asset, asset_to_stac_dict
+from .collections import (
+    Collection,
+    Extent,
+    SpatialExtent,
+    TemporalExtent,
+    build_collection,
+    collection_extent,
+    collection_to_stac_dict,
+)
+from .items import Item, ItemCollection, build_item_from_assets, item_to_stac_dict
 
 __all__ = [
     "Asset",
-    "AssetCollection",
+    "asset_to_stac_dict",
     "Collection",
     "DEFAULT_MEDIA_TYPE",
     "Extent",
     "Item",
     "ItemCollection",
-    "Link",
     "SpatialExtent",
-    "StacFeature",
-    "StacFeatureCollection",
-    "StacLink",
     "TemporalExtent",
     "build_collection",
     "build_item_from_assets",

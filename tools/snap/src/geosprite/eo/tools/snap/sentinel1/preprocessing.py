@@ -9,9 +9,8 @@ import re
 import tempfile
 from urllib.parse import urlparse
 
-from geosprite.eo.tools.snap.core.store import auto_download
 from geosprite.eo.store import StoreClient
-
+from geosprite.eo.tools.snap.core.store import auto_download
 
 @auto_download(urls_param="inputs")
 async def download(inputs: list[str]) -> list[str]:

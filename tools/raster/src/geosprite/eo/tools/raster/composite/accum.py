@@ -2,15 +2,15 @@ from __future__ import annotations
 
 from dataclasses import replace
 
-from geosprite.eo.stac import Asset
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
-from geosprite.eo.io.raster import DatasetReader, write_cog
-from geosprite.eo.tools import ToolContext
 from pydantic import BaseModel, Field
+
+from geosprite.eo.io.raster import DatasetReader, write_cog
+from geosprite.eo.stac import Asset
+from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
 from ..registry import raster_tool
-
 
 class CompositeAccumIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")

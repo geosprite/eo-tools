@@ -1,9 +1,8 @@
-import os
 from dataclasses import dataclass
+import os
 from urllib.parse import urlparse
 
 from osgeo import gdal, osr
-
 
 gdal.UseExceptions()
 

@@ -10,7 +10,6 @@ from urllib.request import Request, urlopen
 
 from geosprite.eo.stac import Collection, Item, ItemCollection, collection_to_stac_dict, item_to_stac_dict
 
-
 class StacApiError(RuntimeError):
     """Raised when a STAC API returns an unsuccessful response."""
 
