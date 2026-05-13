@@ -5,6 +5,7 @@ from .registry import (
     builtin_tools,
     discover_builtin_tools,
     raster_tool,
+    tool,
 )
 
 __all__ = [
@@ -12,4 +13,5 @@ __all__ = [
     "builtin_tools",
     "discover_builtin_tools",
     "raster_tool",
+    "tool",
 ]

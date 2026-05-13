@@ -4,11 +4,10 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.io.raster import crop_raster
 from geosprite.eo.stac import Asset
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_url
-from ..registry import raster_tool
 
 class RasterCropIn(BaseModel):
     input: str = Field(description="Input raster path or URL.")
@@ -20,7 +19,7 @@ class RasterCropIn(BaseModel):
     y_resolution: float | None = None
 
 
-@raster_tool
+@tool
 class RasterCropTool(BaseRasterTool):
     name = "raster.crop"
     domain = "raster"

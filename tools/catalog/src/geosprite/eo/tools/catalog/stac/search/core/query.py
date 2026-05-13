@@ -1,8 +1,3 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 from dataclasses import dataclass
 
 @dataclass

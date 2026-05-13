@@ -1,37 +1,22 @@
 from __future__ import annotations
 
-from typing import TypeVar
-
 from geosprite.eo.tools import (
     Tool,
     ToolRegistry,
-    build_registry,
-    discover_tool_classes,
-    instantiate_tools,
-    register_tool_class,
+    build_builtin_registry as _build_builtin_registry,
+    discover_builtin_tools as _discover_builtin_tools,
+    tool,
 )
 
-T = TypeVar("T", bound=type[Tool])
-
-_TOOL_CLASSES: list[type[Tool]] = []
-_DISCOVERED = False
-
-
-def catalog_tool(cls: T) -> T:
-    """Register a builtin catalog Tool class when its module is imported."""
-    return register_tool_class(_TOOL_CLASSES, cls)
+catalog_tool = tool
 
 
 def discover_builtin_tools() -> list[Tool]:
     """Import every catalog builtin tool module and instantiate registered tools."""
-    global _DISCOVERED
-    _DISCOVERED = discover_tool_classes(
+    return _discover_builtin_tools(
         package_name=__package__ or "geosprite.eo.tools.catalog",
         package_file=__file__,
-        classes=_TOOL_CLASSES,
-        discovered=_DISCOVERED,
     )
-    return instantiate_tools(_TOOL_CLASSES)
 
 
 def builtin_tools() -> list[Tool]:
@@ -40,4 +25,7 @@ def builtin_tools() -> list[Tool]:
 
 
 def build_builtin_registry() -> ToolRegistry:
-    return build_registry(discover_builtin_tools())
+    return _build_builtin_registry(
+        package_name=__package__ or "geosprite.eo.tools.catalog",
+        package_file=__file__,
+    )

@@ -5,10 +5,9 @@ import asyncio
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import ItemCollection
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .common import execute_search
-from .registry import catalog_tool
 
 _SAR_QUERY_FIELDS = {"datetime", "bbox", "geometry", "tile", "orbit_state"}
 
@@ -23,7 +22,7 @@ class SearchSARIn(BaseModel):
     provider: str | None = Field(default=None, description="Provider override: element84 or planetarycomputer.")
 
 
-@catalog_tool
+@tool
 class SearchSARTool(Tool[SearchSARIn, ItemCollection]):
     name = "catalog.search_sar"
     version = "1.0.0"

@@ -6,10 +6,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Collection, build_collection
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, tool
 
-from .registry import catalog_tool
-from .stac_api import GenericStacApiClient
+from .core.stac_api import GenericStacApiClient
 
 class PublishCollectionIn(BaseModel):
     stac_url: str = Field(description="Target STAC API root URL, for example http://localhost:8080.")
@@ -28,7 +27,7 @@ class PublishCollectionIn(BaseModel):
     token: str | None = Field(default=None, description="Optional bearer token for protected STAC APIs.")
 
 
-@catalog_tool
+@tool
 class PublishCollectionTool(Tool[PublishCollectionIn, Collection]):
     name = "catalog.publish_collection"
     version = "1.0.0"

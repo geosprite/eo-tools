@@ -5,9 +5,8 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, tool
 
-from ..registry import snap_tool
 
 class Sentinel1SnapIn(BaseModel):
     inputs: list[str] = Field(
@@ -42,7 +41,7 @@ def _assets_from_result(result: list[str] | dict[str, Any] | Any) -> list[Asset]
     ]
 
 
-@snap_tool
+@tool
 class Sentinel1SnapPreprocessTool(Tool[Sentinel1SnapIn, Sentinel1SnapOut]):
     name = "preprocess.sentinel1_snap"
     version = "1.0.0"

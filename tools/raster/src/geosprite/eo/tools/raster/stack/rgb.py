@@ -3,19 +3,18 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
 from .core import stack_images2rgb
-from ..registry import raster_tool
 
 class RasterStackRgbIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
     output: str = Field(description="Output path or object key.")
 
 
-@raster_tool
+@tool
 class RasterStackRgbTool(BaseRasterTool):
     name = "raster.stack_rgb"
     domain = "raster"

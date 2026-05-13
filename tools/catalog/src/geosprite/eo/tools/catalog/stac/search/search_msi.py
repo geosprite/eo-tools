@@ -5,10 +5,9 @@ import asyncio
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import ItemCollection
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .common import execute_search
-from .registry import catalog_tool
 
 _MSI_QUERY_FIELDS = {"datetime", "bbox", "geometry", "tile", "assets", "cloud_cover", "nodata_percent"}
 
@@ -25,7 +24,7 @@ class SearchMSIIn(BaseModel):
     provider: str | None = Field(default=None, description="Provider override: element84 or planetarycomputer.")
 
 
-@catalog_tool
+@tool
 class SearchMSITool(Tool[SearchMSIIn, ItemCollection]):
     name = "catalog.search_msi"
     version = "1.0.0"

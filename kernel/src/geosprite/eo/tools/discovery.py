@@ -1,15 +1,12 @@
-"""Helpers for package-local tool discovery.
-
-Tool component packages can keep tiny local registries while sharing the module
-scanning and ToolRegistry construction logic here.
-"""
+"""Helpers for tool discovery and registration."""
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 import importlib
-from pathlib import Path
 import pkgutil
+from collections.abc import Iterable
+from functools import partial
+from pathlib import Path
 from typing import TypeVar
 
 from .registry import ToolRegistry
@@ -78,3 +75,57 @@ def build_registry(tools: Iterable[Tool]) -> ToolRegistry:
     for tool in tools:
         registry.register(tool)
     return registry
+
+
+_TOOL_CLASSES: list[type[Tool]] = []
+_DISCOVERED_PACKAGES: set[tuple[str, str]] = set()
+
+tool = partial(register_tool_class, _TOOL_CLASSES)
+
+
+def discover_builtin_tools(
+    *,
+    package_name: str,
+    package_file: str,
+    excluded_modules: set[str] | None = None,
+) -> list[Tool]:
+    """Import builtin tool modules for a package and instantiate all registered tools."""
+
+    package_key = (package_name, str(Path(package_file).resolve()))
+    if package_key not in _DISCOVERED_PACKAGES:
+        discover_tool_classes(
+            package_name=package_name,
+            package_file=package_file,
+            classes=_TOOL_CLASSES,
+            discovered=False,
+            excluded_modules=excluded_modules,
+        )
+        _DISCOVERED_PACKAGES.add(package_key)
+    return instantiate_tools(_TOOL_CLASSES)
+
+
+def builtin_tools() -> list[Tool]:
+    """Instantiate all globally registered builtin tools."""
+
+    return instantiate_tools(_TOOL_CLASSES)
+
+
+def build_builtin_registry(
+    *,
+    package_name: str | None = None,
+    package_file: str | None = None,
+    excluded_modules: set[str] | None = None,
+) -> ToolRegistry:
+    """Build a registry from the global builtin tool pool.
+
+    When ``package_name`` and ``package_file`` are provided, that package is
+    scanned before the registry is built.
+    """
+
+    if package_name is not None and package_file is not None:
+        discover_builtin_tools(
+            package_name=package_name,
+            package_file=package_file,
+            excluded_modules=excluded_modules,
+        )
+    return build_registry(builtin_tools())

@@ -4,11 +4,10 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 
 from ..common import BaseRasterTool
 from .core import RasterItem, compute_common_extent, prepare_items_for_crop
-from ..registry import raster_tool
 
 class CropIntersectionItem(BaseModel):
     name: str = Field(description="Logical item name used as the item key in results")
@@ -53,7 +52,7 @@ def _extent_payload(extent) -> dict[str, Any]:
     }
 
 
-@raster_tool
+@tool
 class CropIntersectionTool(BaseRasterTool):
     name = "raster.crop_intersection"
     domain = "raster"

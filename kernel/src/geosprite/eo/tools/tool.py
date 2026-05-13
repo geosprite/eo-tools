@@ -9,7 +9,7 @@ generated from the docstring + Pydantic schemas.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import ClassVar, Generic, TypeVar
+from typing import Any, ClassVar, Generic, TypeVar
 
 from pydantic import BaseModel
 
@@ -59,3 +59,7 @@ class Tool(ABC, Generic[I, O]):
     @classmethod
     def fully_qualified_name(cls) -> str:
         return f"{cls.domain}.{cls.name}" if "." not in cls.name else cls.name
+
+
+class DictResultOut(BaseModel):
+    result: dict[str, Any]

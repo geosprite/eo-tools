@@ -5,11 +5,11 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.tools import Tool, ToolContext
-from geosprite.eo.tools.catalog.core.stac.match import match_across_collections
+from geosprite.eo.tools import Tool, ToolContext, tool
 
+from .core.match import match_across_collections
 from .common import get_catalog_client, item_to_feature
-from .registry import catalog_tool
+
 
 class CollectionIn(BaseModel):
     name: str
@@ -49,7 +49,7 @@ class SearchMatchOut(BaseModel):
     result: dict[str, Any]
 
 
-@catalog_tool
+@tool
 class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
     name = "catalog.search_match"
     version = "1.0.0"

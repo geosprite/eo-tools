@@ -12,7 +12,7 @@ import uuid
 from pydantic import BaseModel, Field
 
 from geosprite.eo.jobs import JobState, JobStatus
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 
 from ..common import BaseRasterTool, raster_asset
 from .core import (
@@ -23,7 +23,6 @@ from .core import (
     prepare_items_for_crop,
     publish_crop_files,
 )
-from ..registry import raster_tool
 
 _MAX_WORKERS = int(os.environ.get("EARTH_RASTER_CROP_MAX_WORKERS", "2"))
 _JOBS: dict[str, dict[str, Any]] = {}
@@ -142,7 +141,7 @@ def _run_crop_to_intersection_job(job_id: str, payload_data: dict[str, Any]) -> 
         )
 
 
-@raster_tool
+@tool
 class CropToIntersectionJobTool(BaseRasterTool):
     name = "raster.crop_submit_to_intersection"
     domain = "raster"

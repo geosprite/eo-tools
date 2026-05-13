@@ -141,7 +141,7 @@ class SpatialGridFactory:
         return None
 
     @classmethod
-    def get_all(cls) -> List[str]:
+    def get_systems(cls) -> List[str]:
         return list(cls._systems.keys())
 
 

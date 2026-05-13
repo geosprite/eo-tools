@@ -7,12 +7,11 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.io.raster import DatasetReader, write_cog
 from geosprite.eo.stac import Asset
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
 from .common import gdt_type
-from ..registry import raster_tool
 
 class CompositeOccurIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
@@ -31,7 +30,7 @@ def occur(input_files: list[str], output_file: str) -> None:
     write_cog(occur_ratio, output_file, profile)
 
 
-@raster_tool
+@tool
 class CompositeOccurTool(BaseRasterTool):
     name = "compose.occur"
     domain = "compose"

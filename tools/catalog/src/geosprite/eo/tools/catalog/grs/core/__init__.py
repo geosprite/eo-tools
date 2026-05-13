@@ -1,8 +1,8 @@
 # Import base classes
 from .grid import (
-    SpatialGridFactory, 
+    SpatialGridFactory,
     SpatialGridSystem,
-    SpatialGridSystemDAO, 
+    SpatialGridSystemDAO,
     Batch,
     load_geom
 )
@@ -20,52 +20,52 @@ SpatialGridFactory.register("wgrs", WGRS)
 
 class SpatialGrid:
     """Unified spatial grid system interface.
-    
+
     This class provides a simplified interface for working with spatial grid systems.
     It acts as a facade over the underlying SpatialGridService.
     """
-    
+
     def __init__(self, name: str = None, **kwargs):
         """Initialize spatial grid system.
-        
+
         Args:
             name: Optional specific system name. If None, must be specified per operation
             **kwargs: Additional parameters for system creation
         """
         from .grid import SpatialGridService
         self._service = SpatialGridService(name, **kwargs)
-    
+
     def get_tiles(self, geojson, name: str = None, **kwargs):
         """Get tiles for the given geometry.
-        
+
         Args:
             geojson: Geometry as GeoJSON string or dict
             name: Optional specific grid system name
             **kwargs: Additional parameters
-            
+
         Returns:
             Dictionary of tiles
         """
         return self._service.get_tiles(geojson, name, **kwargs)
-    
+
     def get_bounds(self, tiles: list[str], name: str = None, **kwargs):
         """Get bounds for the given tiles.
-        
+
         Args:
             tiles: List of tile identifiers
             name: Optional specific grid system name
             **kwargs: Additional parameters
-            
+
         Returns:
             Bounding box coordinates
         """
         return self._service.get_bounds(tiles, name, **kwargs)
-    
+
     @property
     def name(self) -> str | None:
         """Get current grid system name."""
         return self._service.name
-    
+
     @property
     def current_system(self):
         """Get current grid system instance."""
@@ -83,6 +83,6 @@ __all__ = [
     "SpatialGrid",
     # Specific implementations
     "MGRS",
-    "WGRS", 
+    "WGRS",
     "WRS2"
 ]

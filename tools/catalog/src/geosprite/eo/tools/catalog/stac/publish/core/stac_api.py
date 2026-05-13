@@ -1,4 +1,4 @@
-"""Generic STAC API client used for local and arbitrary STAC services."""
+"""Generic STAC API search used for local and arbitrary STAC services."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ class StacApiError(RuntimeError):
 
 
 class GenericStacApiClient:
-    """Small STAC API client for search and transaction endpoints."""
+    """Small STAC API search for search and transaction endpoints."""
 
     def __init__(self, url: str, *, token: str | None = None, timeout: float = 30.0):
         self.url = url.rstrip("/") + "/"

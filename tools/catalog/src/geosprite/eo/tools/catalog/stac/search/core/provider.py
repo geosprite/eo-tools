@@ -1,10 +1,5 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
-
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any, Optional, Type
+from typing import List, Dict, Optional, Type
 
 from pystac import Asset
 

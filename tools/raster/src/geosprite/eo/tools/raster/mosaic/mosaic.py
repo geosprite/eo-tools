@@ -3,12 +3,11 @@ from __future__ import annotations
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
 from .core import mosaic
-from ..registry import raster_tool
 
 class RasterMosaicIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
@@ -16,7 +15,7 @@ class RasterMosaicIn(BaseModel):
     cutline_geojson: str | None = None
 
 
-@raster_tool
+@tool
 class RasterMosaicTool(BaseRasterTool):
     name = "raster.mosaic"
     domain = "raster"

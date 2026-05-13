@@ -4,7 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 
 from ..common import BaseRasterTool, raster_asset
 from .core import (
@@ -16,7 +16,6 @@ from .core import (
     prepare_item_for_crop,
     publish_crop_files,
 )
-from ..registry import raster_tool
 
 class CropItemPayload(BaseModel):
     name: str = Field(description="Logical item name used as the item key in results")
@@ -82,7 +81,7 @@ def _assets(urls: dict[str, str]) -> list[dict[str, Any]]:
     ]
 
 
-@raster_tool
+@tool
 class CropItemToExtentTool(BaseRasterTool):
     name = "raster.crop_item_to_extent"
     domain = "raster"

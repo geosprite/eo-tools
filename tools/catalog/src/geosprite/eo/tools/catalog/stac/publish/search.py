@@ -6,10 +6,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import ItemCollection
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, tool
 
-from .registry import catalog_tool
-from .stac_api import GenericStacApiClient
+from .core.stac_api import GenericStacApiClient
 
 class SearchStacIn(BaseModel):
     stac_url: str = Field(description="STAC API root URL.")
@@ -24,7 +23,7 @@ class SearchStacIn(BaseModel):
     token: str | None = Field(default=None, description="Optional bearer token for protected STAC APIs.")
 
 
-@catalog_tool
+@tool
 class SearchStacTool(Tool[SearchStacIn, ItemCollection]):
     name = "catalog.search"
     version = "1.0.0"

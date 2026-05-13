@@ -5,27 +5,27 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.tools import Tool, ToolContext
+from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
-from .common import DictResultOut, get_catalog_client
-from .registry import catalog_tool
+from .common import get_catalog_client
 
-class AssetNamesIn(BaseModel):
+
+class GetCollectionAssetsIn(BaseModel):
     collection: str = Field(description="STAC collection name.")
     provider: str | None = Field(default=None, description="Provider override: element84 or planetarycomputer.")
 
 
-@catalog_tool
-class AssetNamesTool(Tool[AssetNamesIn, DictResultOut]):
-    name = "catalog.asset_names"
+@tool
+class GetCollectionAssetsTool(Tool[GetCollectionAssetsIn, DictResultOut]):
+    name = "catalog.get_collection_assets"
     version = "1.0.0"
     domain = "catalog"
     summary = "List available asset names for a STAC collection."
     description = "Return provider asset metadata for the requested collection."
-    InputModel = AssetNamesIn
+    InputModel = GetCollectionAssetsIn
     OutputModel = DictResultOut
 
-    async def run(self, ctx: ToolContext, inputs: AssetNamesIn) -> DictResultOut:
+    async def run(self, ctx: ToolContext, inputs: GetCollectionAssetsIn) -> DictResultOut:
         loop = asyncio.get_running_loop()
         result: dict[str, Any] = await loop.run_in_executor(
             None,

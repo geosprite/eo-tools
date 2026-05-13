@@ -3,14 +3,9 @@ from __future__ import annotations
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from pydantic import BaseModel
-
 from geosprite.eo.stac import Asset, DEFAULT_MEDIA_TYPE, Item, ItemCollection
 
-from .stac import Catalog
-
-class DictResultOut(BaseModel):
-    result: dict[str, Any]
+from .core import Catalog
 
 
 def get_catalog_client(provider: str | None = None) -> Catalog:

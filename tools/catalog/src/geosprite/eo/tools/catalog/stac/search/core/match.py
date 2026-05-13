@@ -1,7 +1,3 @@
-# Copyright (c) GeoSprite. All rights reserved.
-#
-# Author: Jia Song
-#
 """Cross-collection spatio-temporal matching.
 
 Given items from N collections (already filtered by the normal STAC search),

@@ -17,7 +17,7 @@ needs:
 
 ```bash
 pip install -e kernel
-pip install -e libs/stac
+pip install -e libs/core
 pip install -e libs/io
 pip install -e tools/catalog
 ```
@@ -56,25 +56,26 @@ Each tool package owns its own local registry. For example, raster tools use
 the package-local decorator:
 
 ```python
-from .registry import raster_tool
+from .registry import tool
 
 
-@raster_tool
+@tool
 class HelloTool(Tool[HelloIn, HelloOut]):
     ...
 ```
 
-At startup a host imports the tool packages it installed and combines the
-tools it wants to expose:
+At startup a host asks installed tool packages to discover their modules, then
+builds one registry from the shared global tool pool:
 
 ```python
-from geosprite.eo.tools import ToolRegistry
-from geosprite.eo.tools.catalog import builtin_tools as catalog_tools
-from geosprite.eo.tools.raster import builtin_tools as raster_tools
+from geosprite.eo.tools import ToolRegistry, builtin_tools
+from geosprite.eo.tools.catalog import discover_builtin_tools as discover_catalog_tools
+from geosprite.eo.tools.raster import discover_builtin_tools as discover_raster_tools
 
+discover_catalog_tools()
+discover_raster_tools()
 registry = ToolRegistry()
-registry.register_many(catalog_tools())
-registry.register_many(raster_tools())
+registry.register_many(builtin_tools())
 ```
 
 A host can then expose the registered tools through its own API or runtime.

@@ -6,8 +6,6 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
-from .item import Item
-from .query import Query
 
 class Collection(ABC):
     """Base class for handling specific collection types."""

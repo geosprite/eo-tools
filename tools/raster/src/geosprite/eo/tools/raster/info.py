@@ -5,10 +5,9 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from geosprite.eo.io.raster import raster_info
-from geosprite.eo.tools import ToolContext
+from geosprite.eo.tools import ToolContext, tool
 
 from .common import BaseRasterTool
-from .registry import raster_tool
 
 class RasterInfoIn(BaseModel):
     input: str = Field(description="Local path, HTTP URL, S3 URL, or GDAL VSI path.")
@@ -18,7 +17,7 @@ class RasterInfoOut(BaseModel):
     result: dict[str, Any] = Field(description="Raster metadata returned by GDAL.")
 
 
-@raster_tool
+@tool
 class RasterInfoTool(BaseRasterTool):
     name = "raster.info"
     domain = "raster"
