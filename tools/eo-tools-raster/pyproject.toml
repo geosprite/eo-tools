@@ -13,7 +13,6 @@ license = { text = "MIT" }
 dependencies = [
     "eo-tools-core>=0.1.0",
     "eo-io[gdal]>=0.1.0",
-    "eo-jobs",
     "eo-stac>=0.1.0",
     "eo-store",
     "mercantile",

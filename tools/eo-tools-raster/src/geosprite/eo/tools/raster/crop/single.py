@@ -25,7 +25,7 @@ class RasterCropTool(BaseRasterTool):
     name = "crop"
     domain = "raster"
     summary = "Crop one raster to bounds."
-    description = "Crops a raster to target bounds/CRS and publishes the output through eo-store/MinIO."
+    description = "Crops a raster to target bounds/CRS and publishes the output through eo-eo-store/MinIO."
     InputModel = RasterCropIn
     OutputModel = Asset
 

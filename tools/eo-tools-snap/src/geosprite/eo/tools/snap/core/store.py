@@ -38,7 +38,7 @@ class StoreSettings:
     domain: str
     source_dirs: list[str] | None
 
-    def __init__(self, conf_file: str = "store.ini"):
+    def __init__(self, conf_file: str = "eo-store.ini"):
         import os
         import warnings
         from configparser import ConfigParser
