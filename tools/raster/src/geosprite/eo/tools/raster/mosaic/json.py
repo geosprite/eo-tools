@@ -4,10 +4,11 @@ from pydantic import BaseModel
 
 from geosprite.eo.stac import Asset
 from geosprite.eo.tools import ToolContext, tool
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, extract_urls, raster_asset, resolve_input_urls
+from ..outputs import local_output_path, publish_output
 from .core import mosaic_json
+
 
 class RasterMosaicJsonIn(BaseModel):
     output: str
@@ -17,7 +18,7 @@ class RasterMosaicJsonIn(BaseModel):
 
 @tool
 class RasterMosaicJsonTool(BaseRasterTool):
-    name = "raster.mosaic_json"
+    name = "mosaic.mosaic_json"
     domain = "raster"
     summary = "Mosaic rasters from JSON/text."
     description = "Extracts raster URLs from a JSON/text payload or uses explicit URLs, then mosaics them."

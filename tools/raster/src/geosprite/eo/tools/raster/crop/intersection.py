@@ -9,6 +9,7 @@ from geosprite.eo.tools import ToolContext, tool
 from ..common import BaseRasterTool
 from .core import RasterItem, compute_common_extent, prepare_items_for_crop
 
+
 class CropIntersectionItem(BaseModel):
     name: str = Field(description="Logical item name used as the item key in results")
     assets: dict[str, str | dict] = Field(description="Band name to raster path, remote URL, or asset descriptor")
@@ -54,7 +55,7 @@ def _extent_payload(extent) -> dict[str, Any]:
 
 @tool
 class CropIntersectionTool(BaseRasterTool):
-    name = "raster.crop_intersection"
+    name = "crop.intersection"
     domain = "raster"
     summary = "Compute common crop extent."
     description = "Computes the common intersection extent for a group of raster items."

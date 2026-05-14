@@ -2,13 +2,15 @@ from __future__ import annotations
 
 import json
 import re
+from abc import ABC
 from typing import Any, ClassVar
 
 from geosprite.eo.stac import Asset
 from geosprite.eo.store import auto_minio_download
 from geosprite.eo.tools import Tool
 
-class BaseRasterTool(Tool):
+
+class BaseRasterTool(Tool, ABC):
     version: ClassVar[str] = "1.0.0"
     requires: ClassVar[list[str]] = ["gdal"]
 

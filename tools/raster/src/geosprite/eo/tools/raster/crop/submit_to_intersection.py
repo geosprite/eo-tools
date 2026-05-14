@@ -11,7 +11,7 @@ import uuid
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.jobs import JobState, JobStatus
+# from geosprite.eo.jobs import JobState, JobStatus
 from geosprite.eo.tools import ToolContext, tool
 
 from ..common import BaseRasterTool, raster_asset
@@ -143,39 +143,40 @@ def _run_crop_to_intersection_job(job_id: str, payload_data: dict[str, Any]) -> 
 
 @tool
 class CropToIntersectionJobTool(BaseRasterTool):
-    name = "raster.crop_submit_to_intersection"
+    name = "crop.intersection.job"
     domain = "raster"
     summary = "Submit crop-to-intersection job."
     description = "Submits an asynchronous crop-to-intersection job and returns the job status object."
     InputModel = CropToIntersectionJobIn
-    OutputModel = JobStatus
+    OutputModel = CropToIntersectionJobIn
 
-    async def run(self, ctx: ToolContext, inputs: CropToIntersectionJobIn) -> JobStatus:
-        ctx.logger.info("raster.crop_submit_to_intersection item_count=%s", len(inputs.items))
-        job_id = f"crop-{uuid.uuid4().hex[:12]}"
-        submitted_at = datetime.now(timezone.utc)
-        with _JOBS_LOCK:
-            _JOBS[job_id] = {
-                "job_id": job_id,
-                "status": "queued",
-                "phase": "queued",
-                "message": "Waiting for a crop worker",
-                "created_at": submitted_at.isoformat(),
-                "updated_at": submitted_at.isoformat(),
-                "request": {
-                    "spatial_key": inputs.spatial_key,
-                    "time_key": inputs.time_key,
-                    "item_count": len(inputs.items),
-                    "asset_count": sum(len(item.assets) for item in inputs.items),
-                },
-                "result": None,
-                "error": None,
-            }
-        _EXECUTOR.submit(_run_crop_to_intersection_job, job_id, inputs.model_dump(mode="json"))
-        return JobStatus(
-            job_id=job_id,
-            state=JobState.QUEUED,
-            progress=None,
-            submitted_at=submitted_at,
-            message="Waiting for a crop worker",
-        )
+    async def run(self, ctx: ToolContext, inputs: CropToIntersectionJobIn) -> CropToIntersectionJobIn:
+        raise NotImplementedError
+        # ctx.logger.info("raster.crop_submit_to_intersection item_count=%s", len(inputs.items))
+        # job_id = f"crop-{uuid.uuid4().hex[:12]}"
+        # submitted_at = datetime.now(timezone.utc)
+        # with _JOBS_LOCK:
+        #     _JOBS[job_id] = {
+        #         "job_id": job_id,
+        #         "status": "queued",
+        #         "phase": "queued",
+        #         "message": "Waiting for a crop worker",
+        #         "created_at": submitted_at.isoformat(),
+        #         "updated_at": submitted_at.isoformat(),
+        #         "request": {
+        #             "spatial_key": inputs.spatial_key,
+        #             "time_key": inputs.time_key,
+        #             "item_count": len(inputs.items),
+        #             "asset_count": sum(len(item.assets) for item in inputs.items),
+        #         },
+        #         "result": None,
+        #         "error": None,
+        #     }
+        # _EXECUTOR.submit(_run_crop_to_intersection_job, job_id, inputs.model_dump(mode="json"))
+        # return JobStatus(
+        #     job_id=job_id,
+        #     state=JobState.QUEUED,
+        #     progress=None,
+        #     submitted_at=submitted_at,
+        #     message="Waiting for a crop worker",
+        # )

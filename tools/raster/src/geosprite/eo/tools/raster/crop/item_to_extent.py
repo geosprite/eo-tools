@@ -17,6 +17,7 @@ from .core import (
     publish_crop_files,
 )
 
+
 class CropItemPayload(BaseModel):
     name: str = Field(description="Logical item name used as the item key in results")
     assets: dict[str, str | dict] = Field(description="Band name to raster path, remote URL, or asset descriptor")
@@ -83,7 +84,7 @@ def _assets(urls: dict[str, str]) -> list[dict[str, Any]]:
 
 @tool
 class CropItemToExtentTool(BaseRasterTool):
-    name = "raster.crop_item_to_extent"
+    name = "crop.extent"
     domain = "raster"
     summary = "Crop one raster item to extent."
     description = "Crops one raster item to a supplied common extent."

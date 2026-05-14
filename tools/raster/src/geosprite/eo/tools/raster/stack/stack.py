@@ -4,10 +4,11 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
 from geosprite.eo.tools import ToolContext, tool
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
+from ..outputs import local_output_path, publish_output
 from .core import stack_images
+
 
 class RasterStackIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
@@ -16,7 +17,7 @@ class RasterStackIn(BaseModel):
 
 @tool
 class RasterStackTool(BaseRasterTool):
-    name = "raster.stack"
+    name = "stack"
     domain = "raster"
     summary = "Stack rasters into bands."
     description = "Stacks multiple input rasters into one multi-band raster."

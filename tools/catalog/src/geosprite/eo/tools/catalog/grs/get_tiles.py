@@ -16,9 +16,9 @@ class GetTilesIn(BaseModel):
 
 @tool
 class GetTilesTool(Tool[GetTilesIn, DictResultOut]):
-    name = "catalog.get_grs_tiles"
+    name = "tiles"
     version = "1.0.0"
-    domain = "catalog"
+    domain = "catalog.grs"
     summary = "Find spatial grid tiles covering a GeoJSON geometry."
     description = "Return MGRS, WGRS, or WRS2 tile identifiers for the input geometry."
     InputModel = GetTilesIn

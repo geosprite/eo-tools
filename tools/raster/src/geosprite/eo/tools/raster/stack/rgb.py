@@ -4,10 +4,11 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
 from geosprite.eo.tools import ToolContext, tool
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
+from ..outputs import local_output_path, publish_output
 from .core import stack_images2rgb
+
 
 class RasterStackRgbIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
@@ -16,7 +17,7 @@ class RasterStackRgbIn(BaseModel):
 
 @tool
 class RasterStackRgbTool(BaseRasterTool):
-    name = "raster.stack_rgb"
+    name = "stack.stack_rgb"
     domain = "raster"
     summary = "Stack rasters into RGB."
     description = "Stacks three input rasters into one RGB raster."

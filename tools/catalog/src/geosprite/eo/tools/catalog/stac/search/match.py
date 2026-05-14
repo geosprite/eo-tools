@@ -51,7 +51,7 @@ class SearchMatchOut(BaseModel):
 
 @tool
 class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
-    name = "catalog.search_match"
+    name = "match"
     version = "1.0.0"
     domain = "catalog"
     summary = "Search and optionally match items across STAC collections."

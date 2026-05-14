@@ -10,6 +10,7 @@ from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .core.stac_api import GenericStacApiClient
 
+
 class PublishCollectionIn(BaseModel):
     stac_url: str = Field(description="Target STAC API root URL, for example http://localhost:8080.")
     collection: Collection | None = Field(default=None, description="Complete STAC Collection payload.")
@@ -29,7 +30,7 @@ class PublishCollectionIn(BaseModel):
 
 @tool
 class PublishCollectionTool(Tool[PublishCollectionIn, Collection]):
-    name = "catalog.publish_collection"
+    name = "publish.collection"
     version = "1.0.0"
     domain = "catalog"
     summary = "Create or update a collection in a STAC API."

@@ -96,7 +96,7 @@ def _run_crop_to_intersection(inputs: CropToIntersectionIn) -> dict[str, Any]:
 
 @tool
 class CropToIntersectionTool(BaseRasterTool):
-    name = "raster.crop_to_intersection"
+    name = "crop.intersection.group"
     domain = "raster"
     summary = "Crop raster group to intersection."
     description = "Computes the common intersection for a raster group and crops all items to it."

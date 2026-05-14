@@ -26,7 +26,7 @@ class SearchMSIIn(BaseModel):
 
 @tool
 class SearchMSITool(Tool[SearchMSIIn, ItemCollection]):
-    name = "catalog.search_msi"
+    name = "search.msi"
     version = "1.0.0"
     domain = "catalog"
     summary = "Search multispectral imagery from STAC providers."

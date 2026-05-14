@@ -9,6 +9,7 @@ from geosprite.eo.tools import ToolContext, tool
 
 from .common import BaseRasterTool
 
+
 class RasterInfoIn(BaseModel):
     input: str = Field(description="Local path, HTTP URL, S3 URL, or GDAL VSI path.")
 
@@ -19,7 +20,7 @@ class RasterInfoOut(BaseModel):
 
 @tool
 class RasterInfoTool(BaseRasterTool):
-    name = "raster.info"
+    name = "info"
     domain = "raster"
     summary = "Read raster metadata."
     description = "Returns GDAL-backed metadata for a raster path, URL, or VSI URI."

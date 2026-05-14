@@ -24,7 +24,7 @@ class SearchSARIn(BaseModel):
 
 @tool
 class SearchSARTool(Tool[SearchSARIn, ItemCollection]):
-    name = "catalog.search_sar"
+    name = "search.sar"
     version = "1.0.0"
     domain = "catalog"
     summary = "Search SAR imagery from STAC providers."

@@ -4,10 +4,11 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.stac import Asset
 from geosprite.eo.tools import ToolContext, tool
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
+from ..outputs import local_output_path, publish_output
 from .core import mosaic
+
 
 class RasterMosaicIn(BaseModel):
     inputs: list[str] = Field(description="Input raster paths or URLs.")
@@ -17,7 +18,7 @@ class RasterMosaicIn(BaseModel):
 
 @tool
 class RasterMosaicTool(BaseRasterTool):
-    name = "raster.mosaic"
+    name = "mosaic"
     domain = "raster"
     summary = "Mosaic rasters."
     description = "Merges multiple raster inputs into a mosaic, optionally with a cutline GeoJSON."

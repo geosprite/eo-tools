@@ -8,9 +8,9 @@ from pydantic import BaseModel, Field
 from geosprite.eo.io.raster import DatasetReader, write_cog
 from geosprite.eo.stac import Asset
 from geosprite.eo.tools import ToolContext, tool
-from geosprite.eo.tools.raster.outputs import local_output_path, publish_output
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
+from ..outputs import local_output_path, publish_output
 from .common import gdt_type
 
 class CompositeMinIn(BaseModel):
@@ -31,7 +31,7 @@ def minimum(input_files: list[str], output_file: str) -> None:
 @tool
 class CompositeMinTool(BaseRasterTool):
     name = "compose.min"
-    domain = "compose"
+    domain = "raster"
     summary = "Calculate minimum composite."
     InputModel = CompositeMinIn
     OutputModel = Asset

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib
-import pkgutil
 from collections.abc import Iterable
 from functools import partial
 from pathlib import Path
@@ -20,7 +19,9 @@ DEFAULT_EXCLUDED_MODULES = {"common", "core", "geometry", "registry"}
 def register_tool_class(classes: list[type[Tool]], cls: T) -> T:
     """Append a tool class to a package-local class list once."""
     tool_name = getattr(cls, "name", None)
-    if cls not in classes and not any(getattr(existing, "name", None) == tool_name for existing in classes):
+    if cls not in classes and not any(
+        getattr(existing, "name", None) == tool_name for existing in classes
+    ):
         classes.append(cls)
     return cls
 
@@ -35,11 +36,16 @@ def iter_tool_modules(
     package_dir = Path(package_file).resolve().parent
     excluded = DEFAULT_EXCLUDED_MODULES | (excluded_modules or set())
 
-    for module in pkgutil.walk_packages([str(package_dir)], prefix=f"{package_name}."):
-        short_name = module.name.rsplit(".", 1)[-1]
-        if module.ispkg or short_name in excluded or short_name.endswith("_common"):
+    for module_file in sorted(package_dir.rglob("*.py")):
+        relative_module = module_file.relative_to(package_dir).with_suffix("")
+        parts = relative_module.parts
+        if (
+            parts[-1] == "__init__"
+            or any(part in excluded for part in parts)
+            or any(part.endswith("_common") for part in parts)
+        ):
             continue
-        yield module.name
+        yield ".".join((package_name, *parts))
 
 
 def discover_tool_classes(
@@ -129,3 +135,37 @@ def build_builtin_registry(
             excluded_modules=excluded_modules,
         )
     return build_registry(builtin_tools())
+
+
+def build_registry_from_modules(module_names: Iterable[str]) -> ToolRegistry:
+    """Discover tools from registry modules and build one combined registry.
+
+    Each module is expected to expose ``discover_builtin_tools`` or
+    ``build_builtin_registry``. Tool packages in this repo expose both from
+    their package-local ``registry.py`` modules.
+    """
+
+    module_registries: list[ToolRegistry] = []
+    for module_name in module_names:
+        module = importlib.import_module(module_name)
+        discover = getattr(module, "discover_builtin_tools", None)
+        if discover is not None:
+            discover()
+            continue
+
+        build = getattr(module, "build_builtin_registry", None)
+        if build is not None:
+            module_registries.append(build())
+            continue
+
+        raise AttributeError(
+            f"Registry module {module_name!r} must expose "
+            "`discover_builtin_tools` or `build_builtin_registry`."
+        )
+
+    registry = build_builtin_registry()
+    for module_registry in module_registries:
+        for tool_instance in module_registry:
+            if tool_instance.name not in registry:
+                registry.register(tool_instance)
+    return registry

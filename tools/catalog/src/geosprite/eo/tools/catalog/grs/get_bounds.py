@@ -16,9 +16,9 @@ class GetBoundsIn(BaseModel):
 
 @tool
 class GetBoundsTool(Tool[GetBoundsIn, DictResultOut]):
-    name = "catalog.get_grs_bounds"
+    name = "bounds"
     version = "1.0.0"
-    domain = "catalog"
+    domain = "catalog.grs"
     summary = "Get bounds for spatial grid tiles."
     description = "Return bounding boxes for MGRS or WRS2 tile identifiers."
     InputModel = GetBoundsIn

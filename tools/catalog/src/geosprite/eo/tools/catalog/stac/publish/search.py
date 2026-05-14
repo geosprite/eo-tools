@@ -10,6 +10,7 @@ from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .core.stac_api import GenericStacApiClient
 
+
 class SearchStacIn(BaseModel):
     stac_url: str = Field(description="STAC API root URL.")
     collections: list[str] | None = None
@@ -25,7 +26,7 @@ class SearchStacIn(BaseModel):
 
 @tool
 class SearchStacTool(Tool[SearchStacIn, ItemCollection]):
-    name = "catalog.search"
+    name = "search"
     version = "1.0.0"
     domain = "catalog"
     summary = "Search any STAC API."
