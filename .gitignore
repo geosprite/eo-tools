@@ -19,4 +19,4 @@ dist/
 .coverage
 htmlcov/
 
-tools/catalog/src/geosprite/eo/tools/catalog/grs/*/etc/*.sqlite
+tools/eo-tools-catalog/src/geosprite/eo/tools/catalog/grs/*/etc/*.sqlite

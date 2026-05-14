@@ -3,17 +3,19 @@
 Mono repo for Earth Observation Tools.
 
 The repo is split into one lightweight core project, one runtime project, and
-independently installable library and tool projects:
+independently installable tool plugin projects:
 
 - `eo-tools-core/`: shared `Tool`, `ToolContext`, `ToolRegistry` and discovery
   helpers, published as `eo-tools-core`.
 - `eo-tools-runtime/`: CLI, FastAPI REST, and MCP runtime adapters, published as
   `eo-tools-runtime`.
-- `libs/stac/`: shared STAC asset and item models published as `eo-stac`.
-- `libs/io/`: shared URI and GDAL-backed I/O helpers published as `eo-io`.
-- `tools/catalog/`: STAC search and spatial grid tools.
-- `tools/raster/`: GDAL-backed raster crop, mosaic, stack and composite tools.
-- `tools/snap/`: SNAP and Sentinel-1 preprocessing tools.
+- `tools/eo-tools-catalog/`: STAC search and spatial grid tools.
+- `tools/eo-tools-raster/`: GDAL-backed raster crop, mosaic, stack and composite tools.
+- `tools/eo-tools-snap/`: SNAP and Sentinel-1 preprocessing tools.
+
+Reusable EO libraries live outside this repository in the sibling `../eo-libs`
+mono repo. Tool plugins can depend on one or more of those distribution
+packages, such as `eo-stac`, `eo-io`, and `eo-store`.
 
 Install the core and shared libraries first, then the tool packages a host
 needs:
@@ -21,9 +23,9 @@ needs:
 ```bash
 pip install -e eo-tools-core
 pip install -e eo-tools-runtime
-pip install -e libs/stac
-pip install -e libs/io
-pip install -e tools/catalog
+pip install -e ../eo-libs/stac
+pip install -e ../eo-libs/io
+pip install -e tools/eo-tools-catalog
 ```
 
 ## Writing a tool
