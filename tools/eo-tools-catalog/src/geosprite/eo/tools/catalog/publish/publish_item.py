@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from geosprite.eo.stac import Asset, Item, build_item_from_assets
 from geosprite.eo.tools import Tool, ToolContext, tool
 
-from .core.stac_api import GenericStacApiClient
+from .backend.stac_api import GenericStacApiClient
 
 
 class PublishItemIn(BaseModel):

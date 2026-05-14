@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.tools import Tool, ToolContext, tool
 
-from .core.match import match_across_collections
+from .stac.match import match_across_collections
 from .common import get_catalog_client, item_to_feature
 
 

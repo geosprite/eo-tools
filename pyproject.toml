@@ -1,0 +1,23 @@
+[tool.uv.workspace]
+members = [
+    "eo-tools-core",
+    "eo-tools-runtime",
+    "tools/eo-tools-catalog",
+    "tools/eo-tools-raster",
+    "tools/eo-tools-snap",
+]
+
+[tool.uv]
+constraint-dependencies = [
+    "GDAL==3.13.0",
+]
+
+[tool.uv.sources]
+eo-tools-core = { workspace = true }
+eo-tools-runtime = { workspace = true }
+eo-tools-catalog = { workspace = true }
+eo-tools-raster = { workspace = true }
+eo-tools-snap = { workspace = true }
+eo-stac = { path = "../eo-libs/eo-stac", editable = true }
+eo-io = { path = "../eo-libs/eo-io", editable = true }
+eo-store = { path = "../eo-libs/eo-store", editable = true }

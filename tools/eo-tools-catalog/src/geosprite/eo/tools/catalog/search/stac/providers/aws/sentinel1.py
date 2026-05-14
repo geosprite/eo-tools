@@ -8,7 +8,7 @@ from typing import List
 
 from pystac import Item as StacItem
 
-from ......grs.core.mgrs.dao import MGRS
+from geosprite.eo.tools.catalog.grs.core.mgrs.dao import MGRS
 from ...collection import Collection
 from ...item import Item
 from ...query import Query

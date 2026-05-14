@@ -5,7 +5,7 @@ from typing import Any
 
 from geosprite.eo.stac import Asset, DEFAULT_MEDIA_TYPE, Item, ItemCollection
 
-from .core import Catalog
+from .stac import Catalog
 
 
 def get_catalog_client(provider: str | None = None) -> Catalog:
