@@ -24,7 +24,7 @@ needs:
 pip install -e eo-tools-core
 pip install -e eo-tools-runtime
 pip install -e ../eo-libs/stac
-pip install -e ../eo-libs/io
+pip install -e ../eo-libs/eo-io
 pip install -e tools/eo-tools-catalog
 ```
 
