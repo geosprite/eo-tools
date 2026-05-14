@@ -7,8 +7,5 @@ This package provides STAC search and spatial grid tools under
 tool protocol and registry helpers, and on `eo-stac` from `../eo-libs/stac`
 for the shared STAC item and asset models.
 
-```python
-from geosprite.eo.tools.catalog import build_builtin_registry
-
-registry = build_builtin_registry()
-```
+When installed, the package is discovered through the `geosprite.eo.tools`
+Python entry point group.

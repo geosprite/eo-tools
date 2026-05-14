@@ -8,8 +8,5 @@ the shared tool protocol and registry helpers, `eo-stac` from `../eo-libs/stac`
 for asset models, and `eo-io` from `../eo-libs/io` for GDAL-backed raster I/O
 helpers.
 
-```python
-from geosprite.eo.tools.raster import build_builtin_registry
-
-registry = build_builtin_registry()
-```
+When installed, the package is discovered through the `geosprite.eo.tools`
+Python entry point group.

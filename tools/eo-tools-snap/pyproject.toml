@@ -21,5 +21,8 @@ dependencies = [
 [project.urls]
 Organization = "https://github.com/geosprite"
 
+[project.entry-points."geosprite.eo.tools"]
+snap = "geosprite.eo.tools.snap"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/geosprite"]

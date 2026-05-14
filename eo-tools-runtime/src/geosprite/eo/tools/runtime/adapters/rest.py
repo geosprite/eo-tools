@@ -104,26 +104,18 @@ def _add_tool_route(
     )(run_tool)
 
 
-def create_app_from_modules(
-    module_names: Sequence[str],
-    *,
-    title: str = "EO Tools REST API",
-    version: str = "0.1.0",
-):
-    """Build a registry from registry modules and create a FastAPI app."""
-
-    return create_app(
-        load_registry(module_names),
-        title=title,
-        version=version,
-    )
-
-
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Run Earth Observation Tools (eo-tools) as a FastAPI REST service."
     )
-    parser.add_argument("--registry-module", action="append", required=True)
+    parser.add_argument(
+        "--tool-package",
+        action="append",
+        help=(
+            "Import path for a tool package. "
+            "When omitted, installed eo-tools entry points are discovered."
+        ),
+    )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8000, type=int)
     args = parser.parse_args(argv)
@@ -135,7 +127,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             "REST hosting requires uvicorn. Install with `pip install -e eo-tools-runtime[rest]`."
         ) from exc
 
-    app = create_app_from_modules(args.registry_module)
+    app = create_app(load_registry(args.tool_package))
     uvicorn.run(app, host=args.host, port=args.port)
 
 

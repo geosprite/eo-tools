@@ -32,7 +32,7 @@ geosprite.eo.tools.runtime
   core/
     context.py      # Local ToolContext implementation and factories
     execution.py    # protocol-neutral validation, execution, and output helpers
-    loader.py       # registry-module loading
+    loader.py       # entry-point loading
   adapters/
     cli.py          # eo-tools list/describe/run/serve-* commands
     rest.py         # FastAPI app factory and REST runner
@@ -45,39 +45,45 @@ execute tools through `core.execution`, and do not depend on each other.
 ## CLI
 
 ```bash
-eo-tools list --registry-module geosprite.eo.tools.catalog.registry
-eo-tools describe catalog.get_grs_systems --registry-module geosprite.eo.tools.catalog.registry
-eo-tools run catalog.get_grs_systems --registry-module geosprite.eo.tools.catalog.registry --json '{}'
+eo-tools list
+eo-tools describe catalog.get_grs_systems
+eo-tools run catalog.get_grs_systems --json '{}'
+eo-tools list --tool-package geosprite.eo.tools.catalog
 ```
 
 ## REST
 
 ```python
+from geosprite.eo.tools.runtime.core import load_registry
 from geosprite.eo.tools.runtime.adapters.rest import create_app
-from geosprite.eo.tools.catalog.registry import build_builtin_registry
 
-app = create_app(build_builtin_registry())
+app = create_app(load_registry())
 ```
 
 Or run a smoke-test service:
 
 ```bash
-eo-tools serve-rest --registry-module geosprite.eo.tools.catalog.registry --port 8000
+eo-tools serve-rest --port 8000
+eo-tools serve-rest \
+  --tool-package geosprite.eo.tools.catalog \
+  --tool-package geosprite.eo.tools.raster \
+  --port 8000
 ```
 
 ## MCP
 
 ```python
+from geosprite.eo.tools.runtime.core import load_registry
 from geosprite.eo.tools.runtime.adapters.mcp import run_stdio
-from geosprite.eo.tools.catalog.registry import build_builtin_registry
 
-await run_stdio(build_builtin_registry())
+await run_stdio(load_registry())
 ```
 
 Or run an MCP stdio server:
 
 ```bash
-eo-tools serve-mcp --registry-module geosprite.eo.tools.catalog.registry
+eo-tools serve-mcp
+eo-tools serve-mcp --tool-package geosprite.eo.tools.catalog
 ```
 
 REST, MCP, and CLI are sibling adapters. They share protocol-neutral execution

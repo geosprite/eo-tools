@@ -58,11 +58,11 @@ class HelloTool(Tool[HelloIn, HelloOut]):
 
 ## Registering a tool
 
-Each tool package owns its own local registry. For example, raster tools use
-the package-local decorator:
+Tool classes use the shared decorator from `eo-tools-core`. Runtime discovery
+uses each installed plugin package's `geosprite.eo.tools` entry point.
 
 ```python
-from .registry import tool
+from geosprite.eo.tools import tool
 
 
 @tool
@@ -70,28 +70,24 @@ class HelloTool(Tool[HelloIn, HelloOut]):
     ...
 ```
 
-At startup a host asks installed tool packages to discover their modules, then
-builds one registry from the shared global tool pool:
+At startup a host can discover installed tool plugin packages from Python entry
+points and build one registry:
 
 ```python
-from geosprite.eo.tools import ToolRegistry, builtin_tools
-from geosprite.eo.tools.catalog import discover_builtin_tools as discover_catalog_tools
-from geosprite.eo.tools.raster import discover_builtin_tools as discover_raster_tools
+from geosprite.eo.tools import build_registry_from_entry_points
 
-discover_catalog_tools()
-discover_raster_tools()
-registry = ToolRegistry()
-registry.register_many(builtin_tools())
+registry = build_registry_from_entry_points()
 ```
 
 A host can then expose the registered tools through its own API or runtime.
 
-Each tool package can also build its own registry:
+For development, a host can also build a registry from one package object:
 
 ```python
-from geosprite.eo.tools.raster import build_builtin_registry
+import geosprite.eo.tools.raster as raster_tools
+from geosprite.eo.tools import build_registry_from_package
 
-registry = build_builtin_registry()
+registry = build_registry_from_package(raster_tools)
 ```
 
 ## Runtime adapters
@@ -108,33 +104,38 @@ pip install -e "eo-tools-runtime[mcp]"
 CLI:
 
 ```bash
-eo-tools list --registry-module geosprite.eo.tools.catalog.registry
-eo-tools run catalog.get_grs_systems --registry-module geosprite.eo.tools.catalog.registry --json '{}'
+eo-tools list
+eo-tools run catalog.get_grs_systems --json '{}'
+eo-tools list --tool-package geosprite.eo.tools.catalog
 ```
 
 REST:
 
 ```python
+from geosprite.eo.tools.runtime.core import load_registry
 from geosprite.eo.tools.runtime.adapters.rest import create_app
-from geosprite.eo.tools.catalog.registry import build_builtin_registry
 
-app = create_app(build_builtin_registry())
+app = create_app(load_registry())
 ```
 
 MCP stdio:
 
 ```python
+from geosprite.eo.tools.runtime.core import load_registry
 from geosprite.eo.tools.runtime.adapters.mcp import run_stdio
-from geosprite.eo.tools.catalog.registry import build_builtin_registry
 
-await run_stdio(build_builtin_registry())
+await run_stdio(load_registry())
 ```
 
-The runtime also installs smoke-test entry points:
+The runtime also installs commands that discover installed tool plugins:
 
 ```bash
-eo-tools serve-rest --registry-module geosprite.eo.tools.catalog.registry --port 8000
-eo-tools serve-mcp --registry-module geosprite.eo.tools.catalog.registry
+eo-tools serve-rest --port 8000
+eo-tools serve-rest \
+  --tool-package geosprite.eo.tools.catalog \
+  --tool-package geosprite.eo.tools.raster \
+  --port 8000
+eo-tools serve-mcp
 ```
 
 CLI, REST, and MCP are sibling adapters: all depend on the tool registry and

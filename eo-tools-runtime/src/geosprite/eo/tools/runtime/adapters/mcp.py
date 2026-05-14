@@ -93,26 +93,23 @@ async def run_stdio(
         )
 
 
-def create_server_from_modules(
-    module_names: Sequence[str],
-    *,
-    name: str = "eo-tools",
-):
-    """Build a registry from registry modules and create an MCP server."""
-
-    return create_server(load_registry(module_names), name=name)
-
-
 def main(argv: Sequence[str] | None = None) -> None:
     parser = argparse.ArgumentParser(
         description="Run eo-tools as an MCP stdio server."
     )
-    parser.add_argument("--registry-module", action="append", required=True)
+    parser.add_argument(
+        "--tool-package",
+        action="append",
+        help=(
+            "Import path for a tool package. "
+            "When omitted, installed eo-tools entry points are discovered."
+        ),
+    )
     parser.add_argument("--name", default="eo-tools")
     parser.add_argument("--version", default="0.1.0")
     args = parser.parse_args(argv)
 
-    registry = load_registry(args.registry_module)
+    registry = load_registry(args.tool_package)
     asyncio.run(run_stdio(registry, name=args.name, version=args.version))
 
 

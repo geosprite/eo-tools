@@ -21,12 +21,14 @@ from .mcp import main as mcp_main
 from .rest import main as rest_main
 
 
-def _add_registry_args(parser: argparse.ArgumentParser) -> None:
+def _add_tool_package_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
-        "--registry-module",
+        "--tool-package",
         action="append",
-        required=True,
-        help="Import path for a tool package registry module.",
+        help=(
+            "Import path for a tool package. "
+            "When omitted, installed eo-tools entry points are discovered."
+        ),
     )
 
 
@@ -48,7 +50,7 @@ def _print_json(data: Any) -> None:
 
 
 async def _run_tool(args: argparse.Namespace) -> None:
-    registry = load_registry(args.registry_module)
+    registry = load_registry(args.tool_package)
     tool = registry.get(args.tool_name)
     output = await execute_tool(
         tool,
@@ -59,13 +61,13 @@ async def _run_tool(args: argparse.Namespace) -> None:
 
 
 def _list_tools(args: argparse.Namespace) -> None:
-    registry = load_registry(args.registry_module)
+    registry = load_registry(args.tool_package)
     for tool in registry:
         print(tool.name)
 
 
 def _describe_tool(args: argparse.Namespace) -> None:
-    registry = load_registry(args.registry_module)
+    registry = load_registry(args.tool_package)
     _print_json(describe_tool(registry.get(args.tool_name)).model_dump(mode="json"))
 
 
@@ -77,17 +79,17 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     list_parser = subparsers.add_parser("list", help="List registered tools.")
-    _add_registry_args(list_parser)
+    _add_tool_package_args(list_parser)
 
     describe_parser = subparsers.add_parser(
         "describe",
         help="Describe one registered tool.",
     )
-    _add_registry_args(describe_parser)
+    _add_tool_package_args(describe_parser)
     describe_parser.add_argument("tool_name")
 
     run_parser = subparsers.add_parser("run", help="Run one registered tool.")
-    _add_registry_args(run_parser)
+    _add_tool_package_args(run_parser)
     run_parser.add_argument("tool_name")
     run_parser.add_argument("--json", help="Tool input as a JSON object.")
     run_parser.add_argument("--json-file", help="Path to a JSON input file.")
@@ -97,7 +99,7 @@ def build_parser() -> argparse.ArgumentParser:
         "serve-rest",
         help="Serve registered tools through FastAPI REST.",
     )
-    _add_registry_args(rest_parser)
+    _add_tool_package_args(rest_parser)
     rest_parser.add_argument("--host", default="127.0.0.1")
     rest_parser.add_argument("--port", default=8000, type=int)
 
@@ -105,7 +107,7 @@ def build_parser() -> argparse.ArgumentParser:
         "serve-mcp",
         help="Serve registered tools through MCP stdio.",
     )
-    _add_registry_args(mcp_parser)
+    _add_tool_package_args(mcp_parser)
     mcp_parser.add_argument("--name", default="eo-tools")
     mcp_parser.add_argument("--version", default="0.1.0")
 
@@ -123,16 +125,16 @@ def main(argv: Sequence[str] | None = None) -> None:
     elif args.command == "serve-rest":
         rest_argv = [
             item
-            for module in args.registry_module
-            for item in ("--registry-module", module)
+            for package in args.tool_package or ()
+            for item in ("--tool-package", package)
         ]
         rest_argv.extend(["--host", args.host, "--port", str(args.port)])
         rest_main(rest_argv)
     elif args.command == "serve-mcp":
         mcp_argv = [
             item
-            for module in args.registry_module
-            for item in ("--registry-module", module)
+            for package in args.tool_package or ()
+            for item in ("--tool-package", package)
         ]
         mcp_argv.extend(["--name", args.name, "--version", args.version])
         mcp_main(mcp_argv)

@@ -69,15 +69,15 @@ graph TD
 
     eo-tools-catalog
       depends: eo-tools-core, eo-stac, pystac..., shapely...
-      exposes: geosprite.eo.tools.catalog.registry
+      entry point: geosprite.eo.tools = catalog -> geosprite.eo.tools.catalog
     
     eo-tools-raster
       depends: eo-tools-core, eo-store, eo-io, GDAL...
-      exposes: geosprite.eo.tools.raster.registry
+      entry point: geosprite.eo.tools = raster -> geosprite.eo.tools.raster
     
     eo-tools-snap
       depends: eo-tools-core, eo-store, SNAP runtime...
-      exposes: geosprite.eo.tools.snap.registry
+      entry point: geosprite.eo.tools = snap -> geosprite.eo.tools.snap
 
 例如：catalog 和 raster 不互相 import。需要共享的数据结构、STAC DTO、I/O helper，放到 libs/stac、libs/io。
 
@@ -125,8 +125,7 @@ class HelloTool(Tool[HelloIn, HelloOut]):
 
 #### Registering a tool
 
-Each tool package owns its own local registry. For example, raster tools use
-the package-local decorator:
+Tool packages use the shared decorator from `eo-tools-core`:
 
 ```python
 from geosprite.eo.tools import tool, Tool
@@ -137,21 +136,14 @@ class HelloTool(Tool[HelloIn, HelloOut]):
     ...
 ```
 
-```python
-from geosprite.eo.tools import ToolRegistry, builtin_tools
-
-registry = ToolRegistry()
-registry.register_many(builtin_tools())
-```
-
 #### 3）Tool 插件自动发现机制：
-At startup a host asks installed tool packages to discover their modules, then
-builds one registry from the shared global tool pool:
+At startup a host discovers installed tool plugin packages from Python entry
+points, then builds one registry from package-scoped tool discovery:
 
 ```python
-from geosprite.eo.tools import discover_builtin_tools
+from geosprite.eo.tools import build_registry_from_entry_points
 
-discover_builtin_tools()
+registry = build_registry_from_entry_points()
 ```
 
 ### 2.2 eo-tools-runtime工程
@@ -199,29 +191,27 @@ CLI, REST 和 MCP 之间不应该互相依赖。它们应该是 sibling adapters
 
 CLI 应该是一个通用 Tool runner，而不是每个插件自己写一套命令。 建议命令形态：
 
-    eo-tools list --registry-module geosprite.eo.tools.catalog.registry
+    eo-tools list
+    eo-tools list --tool-package geosprite.eo.tools.catalog
     
-    eo-tools describe catalog.get_grs_systems \
-      --registry-module geosprite.eo.tools.catalog.registry
+    eo-tools describe catalog.get_grs_systems
     
     eo-tools run catalog.get_grs_systems \
-      --registry-module geosprite.eo.tools.catalog.registry \
       --json '{}'
     
     eo-tools run catalog.get_grs_tiles \
-      --registry-module geosprite.eo.tools.catalog.registry \
       --json '{"system":"mgrs","geojson":"..."}'
 
 #### 2）REST：
     eo-tools serve-rest \
-      --registry-module geosprite.eo.tools.catalog
-      --registry-module geosprite.eo.tools.raster
+      --tool-package geosprite.eo.tools.catalog \
+      --tool-package geosprite.eo.tools.raster \
       --port 8000
 
 #### 3）MCP：    
     eo-tools serve-mcp \
-      --registry-module geosprite.eo.tools.catalog
-      --registry-module geosprite.eo.tools.raster
+      --tool-package geosprite.eo.tools.catalog \
+      --tool-package geosprite.eo.tools.raster \
       --port 9000
 
 
