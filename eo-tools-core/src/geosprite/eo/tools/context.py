@@ -1,4 +1,4 @@
-"""Runtime context handed to tools at execution time.
+"""Invocation context handed to tools at execution time.
 
 Defined as a `Protocol` so tests can pass any duck-typed stub, and so the SDK
 itself does not need to import storage or service packages.
@@ -9,6 +9,7 @@ from __future__ import annotations
 import logging
 from pathlib import Path
 from typing import Any, Protocol, runtime_checkable
+
 
 @runtime_checkable
 class ToolContext(Protocol):

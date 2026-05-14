@@ -7,6 +7,7 @@ from .registry import ToolRegistry
 from .tool import Tool, DictResultOut
 from .discovery import (
     build_builtin_registry,
+    build_registry_from_modules,
     build_registry,
     builtin_tools,
     discover_builtin_tools,
@@ -24,6 +25,7 @@ __all__ = [
     "ToolRegistry",
     "DictResultOut",
     "build_builtin_registry",
+    "build_registry_from_modules",
     "build_registry",
     "builtin_tools",
     "discover_builtin_tools",

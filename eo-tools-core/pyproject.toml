@@ -3,9 +3,9 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "eo-tools-kernel"
+name = "eo-tools-core"
 version = "0.1.0"
-description = "Core tool protocol, context and registry for Earth Observation Tools."
+description = "Core tool protocol, context, registry, and discovery for Earth Observation Tools."
 authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"

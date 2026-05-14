@@ -11,7 +11,7 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "eo-tools-kernel>=0.1.0",
+    "eo-tools-core>=0.1.0",
     "eo-stac>=0.1.0",
     "planetary-computer",
     "pystac~=1.12.2",

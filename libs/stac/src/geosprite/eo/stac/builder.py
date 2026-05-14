@@ -1,7 +1,7 @@
 """Compatibility imports for STAC build and serialization helpers.
 
-Prefer importing new code from ``geosprite.eo.core.assets``,
-``geosprite.eo.core.items``, or ``geosprite.eo.core.collections``.
+Prefer importing new code from ``geosprite.eo.eo-tools-core.assets``,
+``geosprite.eo.eo-tools-core.items``, or ``geosprite.eo.eo-tools-core.collections``.
 """
 
 from .assets import asset_to_stac_dict

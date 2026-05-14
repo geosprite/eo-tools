@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "eo-tools-runtime"
+version = "0.1.0"
+description = "CLI, REST, and MCP runtime adapters for Earth Observation Tools."
+authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "eo-tools-core>=0.1.0",
+    "pydantic>=2.5",
+]
+
+[project.optional-dependencies]
+rest = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+]
+mcp = [
+    "mcp>=1.10",
+]
+all = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "mcp>=1.10",
+]
+
+[project.scripts]
+eo-tools = "geosprite.eo.tools.runtime.adapters.cli:main"
+eo-tools-rest = "geosprite.eo.tools.runtime.adapters.rest:main"
+eo-tools-mcp = "geosprite.eo.tools.runtime.adapters.mcp:main"
+
+[project.urls]
+Organization = "https://github.com/geosprite"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/geosprite"]

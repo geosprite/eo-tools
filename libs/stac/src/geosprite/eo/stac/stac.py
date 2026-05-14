@@ -1,6 +1,6 @@
 """Compatibility import surface for STAC item DTOs.
 
-Prefer importing from ``geosprite.eo.core`` or ``geosprite.eo.core.items`` in
+Prefer importing from ``geosprite.eo.eo-tools-core`` or ``geosprite.eo.eo-tools-core.items`` in
 new code.
 """
 

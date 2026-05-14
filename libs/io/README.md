@@ -5,7 +5,7 @@ helpers, COG/zarr utilities. Heavy dependencies (GDAL/rasterio, s3fs, gcsfs,
 adlfs) live here as optional extras so other packages stay slim.
 
 ```bash
-pip install eo-io                  # core (fsspec + aiohttp)
+pip install eo-io                  # eo-tools-core (fsspec + aiohttp)
 pip install "eo-io[gdal]"          # + GDAL/numpy/shapely raster/vector helpers
 pip install "eo-io[s3,gcs,azure]"  # + cloud filesystems
 pip install "eo-io[all]"           # everything

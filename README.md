@@ -2,22 +2,26 @@
 
 Mono repo for Earth Observation Tools.
 
-The repo is split into one lightweight kernel project and independently
-installable library and tool projects:
+The repo is split into one lightweight core project, one runtime project, and
+independently installable library and tool projects:
 
-- `kernel/`: shared `Tool`, `ToolContext`, `ToolRegistry` and discovery helpers.
+- `eo-tools-core/`: shared `Tool`, `ToolContext`, `ToolRegistry` and discovery
+  helpers, published as `eo-tools-core`.
+- `eo-tools-runtime/`: CLI, FastAPI REST, and MCP runtime adapters, published as
+  `eo-tools-runtime`.
 - `libs/stac/`: shared STAC asset and item models published as `eo-stac`.
 - `libs/io/`: shared URI and GDAL-backed I/O helpers published as `eo-io`.
 - `tools/catalog/`: STAC search and spatial grid tools.
 - `tools/raster/`: GDAL-backed raster crop, mosaic, stack and composite tools.
 - `tools/snap/`: SNAP and Sentinel-1 preprocessing tools.
 
-Install the kernel and shared libraries first, then the tool packages a host
+Install the core and shared libraries first, then the tool packages a host
 needs:
 
 ```bash
-pip install -e kernel
-pip install -e libs/core
+pip install -e eo-tools-core
+pip install -e eo-tools-runtime
+pip install -e libs/stac
 pip install -e libs/io
 pip install -e tools/catalog
 ```
@@ -87,6 +91,54 @@ from geosprite.eo.tools.raster import build_builtin_registry
 
 registry = build_builtin_registry()
 ```
+
+## Runtime adapters
+
+The runtime project exposes any `ToolRegistry` through CLI, FastAPI REST, or
+MCP. Install only what a host needs:
+
+```bash
+pip install -e eo-tools-runtime
+pip install -e "eo-tools-runtime[rest]"
+pip install -e "eo-tools-runtime[mcp]"
+```
+
+CLI:
+
+```bash
+eo-tools list --registry-module geosprite.eo.tools.catalog.registry
+eo-tools run catalog.get_grs_systems --registry-module geosprite.eo.tools.catalog.registry --json '{}'
+```
+
+REST:
+
+```python
+from geosprite.eo.tools.runtime.adapters.rest import create_app
+from geosprite.eo.tools.catalog.registry import build_builtin_registry
+
+app = create_app(build_builtin_registry())
+```
+
+MCP stdio:
+
+```python
+from geosprite.eo.tools.runtime.adapters.mcp import run_stdio
+from geosprite.eo.tools.catalog.registry import build_builtin_registry
+
+await run_stdio(build_builtin_registry())
+```
+
+The runtime also installs smoke-test entry points:
+
+```bash
+eo-tools serve-rest --registry-module geosprite.eo.tools.catalog.registry --port 8000
+eo-tools serve-mcp --registry-module geosprite.eo.tools.catalog.registry
+```
+
+CLI, REST, and MCP are sibling adapters: all depend on the tool registry and
+shared execution helpers, but they do not depend on each other. That keeps the
+architecture open for future batch or workflow hosts without changing the tool
+contract.
 
 ## Projects
 
