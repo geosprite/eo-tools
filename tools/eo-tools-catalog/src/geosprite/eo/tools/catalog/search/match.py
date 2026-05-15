@@ -5,10 +5,12 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from geosprite.eo.catalog import CatalogSearchRequest
 from geosprite.eo.tools import Tool, ToolContext, tool
+from geosprite.eo.catalog.protocols.stac import search_record_to_item
+from geosprite.eo.catalog.protocols.stac.search.matching import match_across_collections
 
-from .stac.match import match_across_collections
-from .common import get_catalog_client, item_to_feature
+from . import get_stac_backend
 
 
 class CollectionIn(BaseModel):
@@ -76,9 +78,15 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
                 }.items() if value is not None
             }
             try:
-                client = get_catalog_client(collection.provider)
-                query = client.create_query(collection.name, **query_kwargs)
-                items = await loop.run_in_executor(None, lambda: client.search(query))
+                request = CatalogSearchRequest(
+                    collection=collection.name,
+                    provider=collection.provider,
+                    **query_kwargs,
+                )
+                items = await loop.run_in_executor(
+                    None,
+                    lambda: get_stac_backend().search_records(request),
+                )
                 return collection.name, items, None
             except Exception as exc:
                 return collection.name, [], str(exc)
@@ -97,7 +105,7 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
             collection: {
                 "type": "FeatureCollection",
                 "stac_version": "1.0.0",
-                "features": [item_to_feature(item, collection).model_dump(mode="json") for item in items],
+                "features": [search_record_to_item(item, collection).model_dump(mode="json") for item in items],
             }
             for collection, items in items_by_collection.items()
         }
@@ -123,7 +131,7 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
                 {
                     "max_time_delta_seconds": group.max_time_delta_seconds,
                     "features": [
-                        item_to_feature(item, collection).model_dump(mode="json")
+                        search_record_to_item(item, collection).model_dump(mode="json")
                         for collection, item in group.items.items()
                     ],
                 }

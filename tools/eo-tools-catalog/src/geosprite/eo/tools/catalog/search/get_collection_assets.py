@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
-from .common import get_catalog_client
+from .__init__ import get_catalog_service
 
 
 class GetCollectionAssetsIn(BaseModel):
@@ -29,6 +29,6 @@ class GetCollectionAssetsTool(Tool[GetCollectionAssetsIn, DictResultOut]):
         loop = asyncio.get_running_loop()
         result: dict[str, Any] = await loop.run_in_executor(
             None,
-            lambda: get_catalog_client(inputs.provider).get_asset_names(inputs.collection),
+            lambda: get_catalog_service().get_asset_names(inputs.collection, provider=inputs.provider),
         )
         return DictResultOut(result=result)

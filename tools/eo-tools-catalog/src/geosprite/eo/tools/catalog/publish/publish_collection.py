@@ -5,10 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.stac import Collection, build_collection
+from geosprite.eo.stac import Collection, GenericStacApiClient, build_collection
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .backend.stac_api import GenericStacApiClient
 
 
 class PublishCollectionIn(BaseModel):

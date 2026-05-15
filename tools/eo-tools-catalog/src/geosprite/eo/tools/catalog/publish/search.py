@@ -5,10 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.stac import ItemCollection
+from geosprite.eo.stac import GenericStacApiClient, ItemCollection
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .backend.stac_api import GenericStacApiClient
 
 
 class SearchStacIn(BaseModel):

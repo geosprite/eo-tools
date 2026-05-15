@@ -5,10 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.stac import Asset, Item, build_item_from_assets
+from geosprite.eo.stac import Asset, GenericStacApiClient, Item, build_item_from_assets
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .backend.stac_api import GenericStacApiClient
 
 
 class PublishItemIn(BaseModel):

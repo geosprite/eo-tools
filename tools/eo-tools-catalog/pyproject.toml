@@ -12,11 +12,9 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "eo-tools-core>=0.1.0",
+    "eo-catalog-core>=0.1.0",
+    "eo-catalog-stac>=0.1.0",
     "eo-stac>=0.1.0",
-    "planetary-computer",
-    "pystac~=1.12.2",
-    "pystac-client",
-    "shapely",
 ]
 
 [project.urls]
