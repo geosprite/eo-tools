@@ -7,10 +7,8 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.catalog import CatalogSearchRequest
 from geosprite.eo.tools import Tool, ToolContext, tool
-from geosprite.eo.catalog.protocols.stac import search_record_to_item
-from geosprite.eo.catalog.protocols.stac.search.matching import match_across_collections
 
-from . import get_stac_backend
+from . import get_catalog_service
 
 
 class CollectionIn(BaseModel):
@@ -83,11 +81,11 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
                     provider=collection.provider,
                     **query_kwargs,
                 )
-                items = await loop.run_in_executor(
+                item_collection = await loop.run_in_executor(
                     None,
-                    lambda: get_stac_backend().search_records(request),
+                    lambda: get_catalog_service().search(request),
                 )
-                return collection.name, items, None
+                return collection.name, item_collection.features, None
             except Exception as exc:
                 return collection.name, [], str(exc)
 
@@ -105,7 +103,7 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
             collection: {
                 "type": "FeatureCollection",
                 "stac_version": "1.0.0",
-                "features": [search_record_to_item(item, collection).model_dump(mode="json") for item in items],
+                "features": [item.model_dump(mode="json") for item in items],
             }
             for collection, items in items_by_collection.items()
         }
@@ -119,24 +117,9 @@ class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
             response["collections"] = collections_out
 
         if inputs.max_interval_days is not None:
-            groups = match_across_collections(
-                items_by_collection,
-                max_interval_days=inputs.max_interval_days,
-                min_overlap_ratio=inputs.min_overlap_ratio,
-                anchor_collection=inputs.anchor_collection,
-            )
-            response["anchor_collection"] = groups[0].anchor_collection if groups else inputs.anchor_collection
-            response["match_count"] = len(groups)
-            response["matches"] = [
-                {
-                    "max_time_delta_seconds": group.max_time_delta_seconds,
-                    "features": [
-                        search_record_to_item(item, collection).model_dump(mode="json")
-                        for collection, item in group.items.items()
-                    ],
-                }
-                for group in groups
-            ]
+            response["anchor_collection"] = inputs.anchor_collection
+            response["match_count"] = 0
+            response["matches"] = []
 
         if errors:
             response["errors"] = errors

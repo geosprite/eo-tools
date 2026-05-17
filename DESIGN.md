@@ -221,7 +221,7 @@ The runtime project exposes any `ToolRegistry` through CLI, FastAPI REST, or
 MCP. Install only what a host needs:
 
 ```bash
-pip install -e eo-tools-runtime
+pip install -e runtime
 pip install -e "eo-tools-runtime[rest]"
 pip install -e "eo-tools-runtime[mcp]"
 ```

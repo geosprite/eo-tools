@@ -1,4 +1,4 @@
-"""Shared tool metadata and execution helpers for eo-tools-runtime adapters."""
+"""Shared tool metadata and execution helpers for runtime adapters."""
 
 from __future__ import annotations
 

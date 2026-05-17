@@ -1,4 +1,4 @@
-"""Context factory helpers shared by eo-tools-runtime adapters."""
+"""Context factory helpers shared by runtime adapters."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def default_context_factory(
     """Create a per-request context factory for simple local hosts."""
 
     resolved_workdir = Path.cwd() if workdir is None else Path(workdir)
-    resolved_logger = logger or logging.getLogger("geosprite.eo.tools.eo-tools-runtime")
+    resolved_logger = logger or logging.getLogger("geosprite.eo.tools.runtime")
 
     def build_context(run_id: str | None = None) -> ToolContext:
         return LocalToolContext(

@@ -20,7 +20,7 @@ This package depends on `eo-tools-core` and exposes registered tools through:
 Install only the runtime adapters a host needs:
 
 ```bash
-pip install -e eo-tools-runtime
+pip install -e runtime
 pip install -e "eo-tools-runtime[rest]"
 pip install -e "eo-tools-runtime[mcp]"
 ```

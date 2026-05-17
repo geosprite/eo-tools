@@ -11,9 +11,9 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "eo-tools-core>=0.1.0",
-    "eo-io[gdal]>=0.1.0",
-    "eo-stac>=0.1.0",
+    "eo-tools-core",
+    "eo-io[gdal]",
+    "eo-stac",
     "eo-store",
     "mercantile",
     "pyproj",
@@ -27,3 +27,9 @@ raster = "geosprite.eo.tools.raster"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geosprite"]
+
+[tool.uv.sources]
+eo-tools-core = { workspace = true }
+eo-io = { path = "../../eo-libs/eo-io", editable = true }
+eo-stac = { path = "../../eo-libs/eo-stac", editable = true }
+eo-store = { path = "../../eo-libs/eo-store", editable = true }

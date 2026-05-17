@@ -9,7 +9,7 @@ from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
 class GetBoundsIn(BaseModel):
     system: Literal["mgrs", "wrs2"] = Field(description="Spatial grid system with bounds support.")
-    tiles: list[str] = Field(description="Tile identifiers.")
+    tiles: list[str] | str = Field(description="Tile identifier or identifiers.")
 
 
 @tool
@@ -26,5 +26,6 @@ class GetBoundsTool(Tool[GetBoundsIn, DictResultOut]):
         from geosprite.eo.catalog.grs import SpatialGrid
 
         grid = SpatialGrid(inputs.system)
-        result: dict[str, Any] = {"bounds": grid.get_bounds(inputs.tiles)}
+        tiles = [inputs.tiles] if isinstance(inputs.tiles, str) else inputs.tiles
+        result: dict[str, Any] = {"bounds": grid.get_bounds(tiles)}
         return DictResultOut(result=result)

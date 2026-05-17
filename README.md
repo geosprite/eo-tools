@@ -21,8 +21,8 @@ Install the core and shared libraries first, then the tool packages a host
 needs:
 
 ```bash
-pip install -e eo-tools-core
-pip install -e eo-tools-runtime
+pip install -e core
+pip install -e runtime
 pip install -e ../eo-libs/eo-stac
 pip install -e ../eo-libs/eo-io
 pip install -e tools/eo-tools-catalog
@@ -96,7 +96,7 @@ The runtime project exposes any `ToolRegistry` through CLI, FastAPI REST, or
 MCP. Install only what a host needs:
 
 ```bash
-pip install -e eo-tools-runtime
+pip install -e runtime
 pip install -e "eo-tools-runtime[rest]"
 pip install -e "eo-tools-runtime[mcp]"
 ```

@@ -23,7 +23,7 @@ def _import_fastapi() -> tuple[Any, Any, Any]:
     except ImportError as exc:
         raise ImportError(
             "FastAPI hosting requires optional dependencies. "
-            "Install with `pip install -e eo-tools-runtime[rest]`."
+            "Install with `pip install -e runtime[rest]`."
         ) from exc
     return FastAPI, Header, HTTPException
 
@@ -124,7 +124,7 @@ def main(argv: Sequence[str] | None = None) -> None:
         import uvicorn
     except ImportError as exc:
         raise ImportError(
-            "REST hosting requires uvicorn. Install with `pip install -e eo-tools-runtime[rest]`."
+            "REST hosting requires uvicorn. Install with `pip install -e runtime[rest]`."
         ) from exc
 
     app = create_app(load_registry(args.tool_package))

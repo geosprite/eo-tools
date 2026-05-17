@@ -339,8 +339,8 @@ def _bandmath_to_int16(source, jpy):
     """Convert bands to int16 (multiply by 100)"""
     source_bands = list(source.getBandNames())
 
-    BandDescriptor = jpy.get_type('org.esa.snap.eo-tools-core.gpf.common.BandMathsOp$BandDescriptor')
-    target_bands = jpy.array('org.esa.snap.eo-tools-core.gpf.common.BandMathsOp$BandDescriptor', len(source_bands))
+    BandDescriptor = jpy.get_type('org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor')
+    target_bands = jpy.array('org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor', len(source_bands))
 
     for idx, sourceBand_name in enumerate(source_bands):
         targetBand = BandDescriptor()

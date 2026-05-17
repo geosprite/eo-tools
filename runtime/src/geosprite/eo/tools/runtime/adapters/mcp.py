@@ -28,7 +28,7 @@ def _import_mcp() -> tuple[Any, Any, Any, Any, Any]:
     except ImportError as exc:
         raise ImportError(
             "MCP hosting requires optional dependencies. "
-            "Install with `pip install -e eo-tools-runtime[mcp]`."
+            "Install with `pip install -e runtime[mcp]`."
         ) from exc
     return mcp.server.stdio, types, NotificationOptions, Server, InitializationOptions
 

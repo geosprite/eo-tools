@@ -11,10 +11,10 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "eo-tools-core>=0.1.0",
-    "eo-catalog-core>=0.1.0",
-    "eo-catalog-grs>=0.1.0",
-    "eo-catalog-stac>=0.1.0",
+    "eo-tools-core",
+    "eo-catalog-core",
+    "eo-catalog-grs",
+    "eo-catalog-stac",
 ]
 
 [project.urls]
@@ -25,3 +25,9 @@ catalog = "geosprite.eo.tools.catalog"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geosprite"]
+
+[tool.uv.sources]
+eo-tools-core = { workspace = true }
+eo-catalog-core = { path = "../../eo-catalog/core", editable = true }
+eo-catalog-stac = { path = "../../eo-catalog/stac", editable = true }
+eo-catalog-grs = { path = "../../eo-catalog/grs", editable = true }

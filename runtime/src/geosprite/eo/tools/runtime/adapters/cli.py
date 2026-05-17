@@ -1,4 +1,4 @@
-"""Command-line eo-tools-runtime for registered eo-tools."""
+"""Command-line runtime for registered eo-tools."""
 
 from __future__ import annotations
 
