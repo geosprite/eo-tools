@@ -24,17 +24,4 @@ def get_catalog_service() -> CatalogService:
     return _catalog_service
 
 
-def execute_search(
-    collection: str,
-    query_kwargs: dict,
-    provider: str | None = None,
-) -> ItemCollection:
-    request = CatalogSearchRequest(
-        collection=collection,
-        provider=provider,
-        **query_kwargs,
-    )
-    return get_catalog_service().search(request)
-
-
 catalog_service = get_catalog_service()
