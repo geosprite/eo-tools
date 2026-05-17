@@ -6,8 +6,6 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
-from .core import SpatialGrid
-
 
 class GetTilesIn(BaseModel):
     system: Literal["mgrs", "wgrs", "wrs2"] = Field(description="Spatial grid system.")
@@ -25,6 +23,8 @@ class GetTilesTool(Tool[GetTilesIn, DictResultOut]):
     OutputModel = DictResultOut
 
     async def run(self, ctx: ToolContext, inputs: GetTilesIn) -> DictResultOut:
+        from geosprite.eo.catalog.grs import SpatialGrid
+
         grid = SpatialGrid(inputs.system)
         result: dict[str, Any] = {key: value for tiles in grid.get_tiles(inputs.geojson) for key, value in tiles.items()}
         return DictResultOut(result=result)

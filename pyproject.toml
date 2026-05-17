@@ -18,8 +18,9 @@ eo-tools-runtime = { workspace = true }
 eo-tools-catalog = { workspace = true }
 eo-tools-raster = { workspace = true }
 eo-tools-snap = { workspace = true }
-eo-catalog-core = { path = "../eo-catalog/packages/eo-catalog-core", editable = true }
-eo-catalog-stac = { path = "../eo-catalog/packages/eo-catalog-stac", editable = true }
+eo-catalog-core = { path = "../eo-catalog/core", editable = true }
+eo-catalog-grs = { path = "../eo-catalog/grs", editable = true }
+eo-catalog-stac = { path = "../eo-catalog/stac", editable = true }
 eo-stac = { path = "../eo-libs/eo-stac", editable = true }
 eo-io = { path = "../eo-libs/eo-io", editable = true }
 eo-store = { path = "../eo-libs/eo-store", editable = true }

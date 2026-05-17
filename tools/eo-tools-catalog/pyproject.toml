@@ -13,8 +13,8 @@ license = { text = "MIT" }
 dependencies = [
     "eo-tools-core>=0.1.0",
     "eo-catalog-core>=0.1.0",
+    "eo-catalog-grs>=0.1.0",
     "eo-catalog-stac>=0.1.0",
-    "eo-stac>=0.1.0",
 ]
 
 [project.urls]
@@ -25,7 +25,3 @@ catalog = "geosprite.eo.tools.catalog"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geosprite"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/geosprite/eo/tools/catalog/core/grs/mgrs/etc/mgrs.sqlite" = "geosprite/eo/tools/catalog/core/grs/mgrs/etc/mgrs.sqlite"
-"src/geosprite/eo/tools/catalog/core/grs/wrs2/etc/wrs2.sqlite" = "geosprite/eo/tools/catalog/core/grs/wrs2/etc/wrs2.sqlite"

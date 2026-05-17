@@ -6,8 +6,6 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
-from .core import SpatialGrid
-
 
 class GetBoundsIn(BaseModel):
     system: Literal["mgrs", "wrs2"] = Field(description="Spatial grid system with bounds support.")
@@ -25,6 +23,8 @@ class GetBoundsTool(Tool[GetBoundsIn, DictResultOut]):
     OutputModel = DictResultOut
 
     async def run(self, ctx: ToolContext, inputs: GetBoundsIn) -> DictResultOut:
+        from geosprite.eo.catalog.grs import SpatialGrid
+
         grid = SpatialGrid(inputs.system)
         result: dict[str, Any] = {"bounds": grid.get_bounds(inputs.tiles)}
         return DictResultOut(result=result)

@@ -4,8 +4,6 @@ from pydantic import BaseModel
 
 from geosprite.eo.tools import Tool, ToolContext, tool
 
-from .core import SpatialGridFactory
-
 
 class GetSystemsIn(BaseModel):
     pass
@@ -26,4 +24,6 @@ class SpatialSystemsTool(Tool[GetSystemsIn, GetSystemsOut]):
     OutputModel = GetSystemsOut
 
     async def run(self, ctx: ToolContext, inputs: GetSystemsIn) -> GetSystemsOut:
+        from geosprite.eo.catalog.grs import SpatialGridFactory
+
         return GetSystemsOut(systems=SpatialGridFactory.get_systems())

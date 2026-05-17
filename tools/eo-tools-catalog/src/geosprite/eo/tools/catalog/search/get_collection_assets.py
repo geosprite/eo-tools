@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from geosprite.eo.tools import Tool, ToolContext, DictResultOut, tool
 
-from .__init__ import get_catalog_service
+from . import get_catalog_service
 
 
 class GetCollectionAssetsIn(BaseModel):
