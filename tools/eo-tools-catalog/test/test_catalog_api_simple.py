@@ -190,7 +190,7 @@ def test_utility_endpoints():
             "provider": "planetarycomputer"
         }
         response = requests.post(
-            f"{BASE_URL}/catalog/collection/assets",
+            f"{BASE_URL}/catalog/meta/assets",
             json=payload,
             timeout=30
         )
