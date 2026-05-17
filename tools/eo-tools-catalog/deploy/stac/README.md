@@ -21,10 +21,10 @@ http://localhost:8082
 
 ## Tool Flow
 
-1. Run a raster, SNAP, or model tool that returns `geosprite.eo.stac.Asset`.
-2. Create a collection if needed with `catalog.publish_collection`.
-3. Publish a result item with `catalog.publish_item`.
-4. Search local or external STAC APIs with `catalog.search`.
+1. Run a raster, SNAP, or model tool that returns `geosprite.eo.catalog.Asset`.
+2. Create a collection if needed with `publish.collection`.
+3. Publish a result item with `publish.item`.
+4. Search supported catalog providers with the catalog search tools.
 
 The STAC service is intentionally deployed outside the Python packages. The
 repo owns the local development compose file, while `eo-tools` remains a tool

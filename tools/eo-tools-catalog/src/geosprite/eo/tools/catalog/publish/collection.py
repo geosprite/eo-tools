@@ -5,7 +5,9 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.stac import Collection, GenericStacApiClient, build_collection
+from geosprite.eo.catalog import Collection
+from geosprite.eo.catalog.protocols.stac import StacPublishClient
+from geosprite.eo.catalog.models import build_collection
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 
@@ -38,7 +40,7 @@ class PublishCollectionTool(Tool[PublishCollectionIn, Collection]):
 
     async def run(self, ctx: ToolContext, inputs: PublishCollectionIn) -> Collection:
         collection = inputs.collection or self._build_collection(inputs)
-        client = GenericStacApiClient(inputs.stac_url, token=inputs.token)
+        client = StacPublishClient(inputs.stac_url, token=inputs.token)
         loop = asyncio.get_running_loop()
         if inputs.upsert:
             return await loop.run_in_executor(None, lambda: client.upsert_collection(collection))
