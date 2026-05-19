@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.urls]
-Organization = "https://github.com/geosprite"
+Organization = "https://github.com/geosprite/eo-tools"
 
 [project.entry-points."geosprite.eo.tools"]
 raster = "geosprite.eo.tools.raster"
@@ -31,5 +31,4 @@ packages = ["src/geosprite"]
 [tool.uv.sources]
 eo-tools-core = { workspace = true }
 eo-io = { path = "../../eo-libs/eo-io", editable = true }
-eo-stac = { path = "../../eo-libs/eo-stac", editable = true }
 eo-store = { path = "../../eo-libs/eo-store", editable = true }

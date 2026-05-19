@@ -102,6 +102,11 @@ def build_parser() -> argparse.ArgumentParser:
     _add_tool_package_args(rest_parser)
     rest_parser.add_argument("--host", default="127.0.0.1")
     rest_parser.add_argument("--port", default=8000, type=int)
+    rest_parser.add_argument(
+        "--root-path",
+        default="",
+        help="ASGI root path used when serving behind a path-prefix proxy.",
+    )
 
     mcp_parser = subparsers.add_parser(
         "serve-mcp",
@@ -128,7 +133,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             for package in args.tool_package or ()
             for item in ("--tool-package", package)
         ]
-        rest_argv.extend(["--host", args.host, "--port", str(args.port)])
+        rest_argv.extend(
+            ["--host", args.host, "--port", str(args.port), "--root-path", args.root_path]
+        )
         rest_main(rest_argv)
     elif args.command == "serve-mcp":
         mcp_argv = [

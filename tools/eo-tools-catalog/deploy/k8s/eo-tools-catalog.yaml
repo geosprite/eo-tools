@@ -26,18 +26,18 @@ spec:
     spec:
       containers:
         - name: rest
-          image: registry.example.com/geosprite/eo-tools-catalog:0.1.0
+          image: eo-tools-catalog:0.1.0
           imagePullPolicy: IfNotPresent
           command:
             - eo-tools
           args:
             - serve-rest
-            - --tool-package
-            - geosprite.eo.tools.catalog
             - --host
             - 0.0.0.0
             - --port
             - "8000"
+            - --root-path
+            - /eo-tools
           ports:
             - name: http
               containerPort: 8000
@@ -99,7 +99,7 @@ spec:
     spec:
       containers:
         - name: mcp
-          image: registry.example.com/geosprite/eo-tools-catalog:0.1.0
+          image: eo-tools-catalog:0.1.0
           imagePullPolicy: IfNotPresent
           stdin: true
           tty: false
@@ -107,8 +107,6 @@ spec:
             - eo-tools
           args:
             - serve-mcp
-            - --tool-package
-            - geosprite.eo.tools.catalog
             - --name
             - eo-tools-catalog
             - --version
@@ -121,8 +119,6 @@ spec:
               command:
                 - eo-tools
                 - list
-                - --tool-package
-                - geosprite.eo.tools.catalog
             initialDelaySeconds: 20
             periodSeconds: 30
             timeoutSeconds: 10
@@ -160,6 +156,19 @@ spec:
       port: 80
       targetPort: http
 ---
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: eo-tools-strip-prefix
+  namespace: eo-tools
+  labels:
+    app.kubernetes.io/name: eo-tools-catalog
+    app.kubernetes.io/part-of: eo-tools
+spec:
+  stripPrefix:
+    prefixes:
+      - /eo-tools
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -168,13 +177,14 @@ metadata:
   labels:
     app.kubernetes.io/name: eo-tools-catalog
     app.kubernetes.io/part-of: eo-tools
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: eo-tools-eo-tools-strip-prefix@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
-    - host: catalog.eo-tools.local
-      http:
+    - http:
         paths:
-          - path: /
+          - path: /eo-tools
             pathType: Prefix
             backend:
               service:

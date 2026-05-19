@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.urls]
-Organization = "https://github.com/geosprite"
+Organization = "https://github.com/geosprite/eo-tools"
 
 [project.entry-points."geosprite.eo.tools"]
 catalog = "geosprite.eo.tools.catalog"

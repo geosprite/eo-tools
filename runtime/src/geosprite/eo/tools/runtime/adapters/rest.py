@@ -33,6 +33,7 @@ def create_app(
     *,
     title: str = "EO Tools REST API",
     version: str = "0.1.0",
+    root_path: str = "",
     context_factory: ContextFactory | None = None,
 ):
     """Create a FastAPI app from a tool registry.
@@ -43,7 +44,7 @@ def create_app(
 
     FastAPI, Header, HTTPException = _import_fastapi()
     build_context = context_factory or default_context_factory()
-    app = FastAPI(title=title, version=version)
+    app = FastAPI(title=title, version=version, root_path=root_path)
 
     @app.get("/health")
     async def health() -> dict[str, str]:
@@ -118,6 +119,14 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", default=8000, type=int)
+    parser.add_argument(
+        "--root-path",
+        default="",
+        help=(
+            "ASGI root path used when serving behind a path-prefix proxy, "
+            "for example /eo-tools."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -127,7 +136,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             "REST hosting requires uvicorn. Install with `pip install -e runtime[rest]`."
         ) from exc
 
-    app = create_app(load_registry(args.tool_package))
+    app = create_app(load_registry(args.tool_package), root_path=args.root_path)
     uvicorn.run(app, host=args.host, port=args.port)
 
 
