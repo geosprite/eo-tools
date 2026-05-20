@@ -13,7 +13,7 @@ license = { text = "MIT" }
 dependencies = [
     "eo-tools-core",
     "eo-io[gdal]",
-    "eo-stac",
+    "eo-catalog-core",
     "eo-store",
     "mercantile",
     "pyproj",
@@ -30,5 +30,6 @@ packages = ["src/geosprite"]
 
 [tool.uv.sources]
 eo-tools-core = { workspace = true }
-eo-io = { path = "../../eo-libs/eo-io", editable = true }
-eo-store = { path = "../../eo-libs/eo-store", editable = true }
+eo-io = { workspace = true }
+eo-store = { workspace = true }
+eo-catalog-core = { workspace = true }

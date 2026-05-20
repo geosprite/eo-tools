@@ -12,9 +12,9 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "eo-tools-core>=0.1.0",
-    "aria2p[tui]",
-    "eo-stac>=0.1.0",
+    "eo-catalog-stac>=0.1.0",
     "eo-store",
+    "aria2p[tui]",
     "GDAL",
 ]
 
@@ -26,3 +26,7 @@ snap = "geosprite.eo.tools.snap"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/geosprite"]
+
+[tool.uv.sources]
+eo-tools-core = { workspace = true }
+eo-store = { workspace = true }

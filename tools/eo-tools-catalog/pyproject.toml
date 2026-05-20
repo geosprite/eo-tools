@@ -28,6 +28,6 @@ packages = ["src/geosprite"]
 
 [tool.uv.sources]
 eo-tools-core = { workspace = true }
-eo-catalog-core = { path = "../../eo-catalog/core", editable = true }
-eo-catalog-stac = { path = "../../eo-catalog/stac", editable = true }
-eo-catalog-grs = { path = "../../eo-catalog/grs", editable = true }
+eo-catalog-core = { workspace = true }
+eo-catalog-grs = { workspace = true }
+eo-catalog-stac = { workspace = true }

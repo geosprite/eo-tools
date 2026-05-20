@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from geosprite.eo.catalog import CatalogBackendRegistry, CatalogService
-from geosprite.eo.catalog import CatalogSearchRequest, ItemCollection
 from geosprite.eo.catalog.protocols.stac import StacCatalogBackend
 
 _catalog_service = None

@@ -5,7 +5,7 @@ import re
 from abc import ABC
 from typing import Any, ClassVar
 
-from geosprite.eo.stac import Asset
+from geosprite.eo.catalog import Asset
 from geosprite.eo.store import auto_minio_download
 from geosprite.eo.tools import Tool
 

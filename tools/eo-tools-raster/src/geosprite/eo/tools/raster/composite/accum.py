@@ -5,7 +5,7 @@ from dataclasses import replace
 from pydantic import BaseModel, Field
 
 from geosprite.eo.io.raster import DatasetReader, write_cog
-from geosprite.eo.stac import Asset
+from geosprite.eo.catalog import Asset
 from geosprite.eo.tools import ToolContext, tool
 
 from ..common import BaseRasterTool, raster_asset, resolve_input_urls
