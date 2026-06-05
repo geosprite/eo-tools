@@ -1,1 +1,1 @@
-"""Raster tools plugin package."""
+"""Raster tool registration package."""

@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.catalog import Collection
-from geosprite.eo.catalog.protocols.stac import StacPublishClient
+from geosprite.eo.catalog.models import Collection
+from geosprite.eo.catalog.writer import CatalogPublishService
 from geosprite.eo.catalog.models import build_collection
 from geosprite.eo.tools import Tool, ToolContext, tool
 
@@ -31,7 +31,6 @@ class PublishCollectionIn(BaseModel):
 @tool
 class PublishCollectionTool(Tool[PublishCollectionIn, Collection]):
     name = "publish.collection"
-    version = "1.0.0"
     domain = "catalog"
     summary = "Create or update a collection in a STAC API."
     description = "Publishes a STAC Collection through STAC API transaction endpoints."
@@ -40,11 +39,16 @@ class PublishCollectionTool(Tool[PublishCollectionIn, Collection]):
 
     async def run(self, ctx: ToolContext, inputs: PublishCollectionIn) -> Collection:
         collection = inputs.collection or self._build_collection(inputs)
-        client = StacPublishClient(inputs.stac_url, token=inputs.token)
+        service = CatalogPublishService()
+        request = {
+            "endpoint_url": inputs.stac_url,
+            "collection": collection,
+            "token": inputs.token,
+        }
         loop = asyncio.get_running_loop()
         if inputs.upsert:
-            return await loop.run_in_executor(None, lambda: client.upsert_collection(collection))
-        return await loop.run_in_executor(None, lambda: client.create_collection(collection))
+            return await loop.run_in_executor(None, lambda: service.upsert_collection(request))
+        return await loop.run_in_executor(None, lambda: service.create_collection(request))
 
     @staticmethod
     def _build_collection(inputs: PublishCollectionIn) -> Collection:

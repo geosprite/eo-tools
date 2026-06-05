@@ -32,9 +32,6 @@ class Tool(ABC, Generic[I, O]):
     name: ClassVar[str]
     """Globally unique tool name, e.g. `'compose.median'`."""
 
-    version: ClassVar[str] = "0.1.0"
-    """Semver version of the tool."""
-
     domain: ClassVar[str] = "general"
     """Coarse domain tag: `'preprocess' | 'postprocess' | 'ai' | 'compose' | ...`."""
 

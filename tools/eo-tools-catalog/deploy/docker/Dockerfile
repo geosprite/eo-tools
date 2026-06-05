@@ -16,12 +16,12 @@ RUN uv pip install --no-config --no-sources --no-cache \
     ./eo-catalog/grs \
     ./eo-catalog/stac \
     ./eo-tools/core \
-    "./eo-tools/runtime[all]"
+    "./eo-tools/runtime[rest,mcp]"
 
 RUN uv pip install --no-config --no-sources --no-cache --no-deps \
     ./eo-tools/tools/eo-tools-catalog
 
-FROM python:3.12-slim-bookworm
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \

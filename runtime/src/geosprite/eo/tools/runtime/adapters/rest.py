@@ -14,6 +14,7 @@ from ..core import (
     describe_tool,
     execute_tool,
     load_registry,
+    store_context_factory,
 )
 
 
@@ -34,6 +35,7 @@ def create_app(
     title: str = "EO Tools REST API",
     version: str = "0.1.0",
     root_path: str = "",
+    service_path: str = "",
     context_factory: ContextFactory | None = None,
 ):
     """Create a FastAPI app from a tool registry.
@@ -44,17 +46,25 @@ def create_app(
 
     FastAPI, Header, HTTPException = _import_fastapi()
     build_context = context_factory or default_context_factory()
-    app = FastAPI(title=title, version=version, root_path=root_path)
+    service_path = _normalize_service_path(service_path)
+    docs_url = f"{service_path}/docs" if service_path else "/docs"
+    openapi_url = f"{service_path}/openapi.json" if service_path else "/openapi.json"
+    redoc_url = f"{service_path}/redoc" if service_path else "/redoc"
+    app = FastAPI(
+        title=title,
+        version=version,
+        root_path=root_path,
+        docs_url=docs_url,
+        openapi_url=openapi_url,
+        redoc_url=redoc_url,
+    )
 
-    @app.get("/health")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @app.get("/")
     async def list_tools() -> list[dict[str, Any]]:
         return [describe_tool(tool).model_dump(mode="json") for tool in registry]
 
-    @app.get("/{tool_name}")
     async def get_tool(tool_name: str) -> dict[str, Any]:
         try:
             tool = registry.get(tool_name)
@@ -62,10 +72,26 @@ def create_app(
             raise HTTPException(status_code=404, detail=str(exc)) from exc
         return describe_tool(tool).model_dump(mode="json")
 
+    app.get("/health", include_in_schema=not service_path)(health)
+    app.get("/", include_in_schema=not service_path)(list_tools)
+    if service_path:
+        app.get(f"{service_path}/health")(health)
+        app.get(service_path, name="List tools")(list_tools)
+        app.get(f"{service_path}/", include_in_schema=False)(list_tools)
+        app.get(f"{service_path}/{{tool_name}}", name="Get tool")(get_tool)
+    app.get("/{tool_name}", include_in_schema=not service_path)(get_tool)
+
     for tool in registry:
         _add_tool_route(app, tool, build_context, Header)
 
     return app
+
+
+def _normalize_service_path(service_path: str) -> str:
+    service_path = service_path.strip()
+    if not service_path or service_path == "/":
+        return ""
+    return "/" + service_path.strip("/")
 
 
 def _add_tool_route(
@@ -127,6 +153,25 @@ def main(argv: Sequence[str] | None = None) -> None:
             "for example /eo-tools."
         ),
     )
+    parser.add_argument(
+        "--service-path",
+        default="",
+        help=(
+            "Path inside the app for service-level endpoints such as docs, "
+            "OpenAPI, health, and tool listing, for example /catalog."
+        ),
+    )
+    parser.add_argument(
+        "--workdir",
+        help="Tool runtime workspace used for local outputs and staging.",
+    )
+    parser.add_argument(
+        "--store-config",
+        help=(
+            "Optional JSON Store config. When omitted, the runtime uses the "
+            "default Store if eo-store is installed."
+        ),
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -136,7 +181,15 @@ def main(argv: Sequence[str] | None = None) -> None:
             "REST hosting requires uvicorn. Install with `pip install -e runtime[rest]`."
         ) from exc
 
-    app = create_app(load_registry(args.tool_package), root_path=args.root_path)
+    app = create_app(
+        load_registry(args.tool_package),
+        root_path=args.root_path,
+        service_path=args.service_path,
+        context_factory=store_context_factory(
+            store_config=args.store_config,
+            workdir=args.workdir,
+        ),
+    )
     uvicorn.run(app, host=args.host, port=args.port)
 
 

@@ -13,7 +13,6 @@ class ToolDescriptor(BaseModel):
     """Protocol-neutral metadata for a registered tool."""
 
     name: str
-    version: str
     domain: str
     summary: str
     description: str
@@ -33,7 +32,6 @@ def describe_tool(tool: Tool) -> ToolDescriptor:
 
     return ToolDescriptor(
         name=tool.name,
-        version=tool.version,
         domain=tool.domain,
         summary=tool.summary,
         description=tool.description,

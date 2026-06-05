@@ -16,6 +16,7 @@ from ..core import (
     dump_tool_output,
     execute_tool,
     load_registry,
+    store_context_factory,
 )
 
 
@@ -107,10 +108,31 @@ def main(argv: Sequence[str] | None = None) -> None:
     )
     parser.add_argument("--name", default="eo-tools")
     parser.add_argument("--version", default="0.1.0")
+    parser.add_argument(
+        "--workdir",
+        help="Tool runtime workspace used for local outputs and staging.",
+    )
+    parser.add_argument(
+        "--store-config",
+        help=(
+            "Optional JSON Store config. Requires eo-store only when this "
+            "argument is supplied."
+        ),
+    )
     args = parser.parse_args(argv)
 
     registry = load_registry(args.tool_package)
-    asyncio.run(run_stdio(registry, name=args.name, version=args.version))
+    asyncio.run(
+        run_stdio(
+            registry,
+            name=args.name,
+            version=args.version,
+            context_factory=store_context_factory(
+                store_config=args.store_config,
+                workdir=args.workdir,
+            ),
+        )
+    )
 
 
 if __name__ == "__main__":

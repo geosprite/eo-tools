@@ -44,7 +44,6 @@ def _assets_from_result(result: list[str] | dict[str, Any] | Any) -> list[Asset]
 @tool
 class Sentinel1SnapPreprocessTool(Tool[Sentinel1SnapIn, Sentinel1SnapOut]):
     name = "preprocess.sentinel1_snap"
-    version = "1.0.0"
     domain = "preprocess"
     summary = "Preprocess Sentinel-1 GRD with ESA SNAP."
     description = (

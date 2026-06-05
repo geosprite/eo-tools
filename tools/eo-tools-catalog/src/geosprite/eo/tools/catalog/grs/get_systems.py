@@ -16,7 +16,6 @@ class GetSystemsOut(BaseModel):
 @tool
 class SpatialSystemsTool(Tool[GetSystemsIn, GetSystemsOut]):
     name = "systems"
-    version = "1.0.0"
     domain = "catalog.grs"
     summary = "List available spatial grid systems."
     description = "Return the spatial grid systems registered in catalog."

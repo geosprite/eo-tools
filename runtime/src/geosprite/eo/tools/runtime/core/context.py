@@ -45,3 +45,33 @@ def default_context_factory(
         )
 
     return build_context
+
+
+def store_context_factory(
+    *,
+    store_config: str | Path | None = None,
+    workdir: str | Path | None = None,
+    logger: logging.Logger | None = None,
+) -> ContextFactory:
+    """Create a local context factory with Store support when available."""
+
+    if store_config is not None:
+        try:
+            from geosprite.eo.store import load_store_config
+        except ImportError as exc:
+            raise ImportError(
+                "Store config support requires `eo-store`. "
+                "Install `eo-tools-runtime[store]` or install `eo-store`."
+            ) from exc
+        store = load_store_config(store_config)
+    else:
+        store = _default_store_if_available()
+    return default_context_factory(store=store, workdir=workdir, logger=logger)
+
+
+def _default_store_if_available() -> object | None:
+    try:
+        from geosprite.eo.store import StoreService
+    except ImportError:
+        return None
+    return StoreService.with_defaults()

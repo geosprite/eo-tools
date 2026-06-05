@@ -38,6 +38,8 @@ spec:
             - "8000"
             - --root-path
             - /eo-tools
+            - --service-path
+            - /catalog
           ports:
             - name: http
               containerPort: 8000
@@ -184,7 +186,7 @@ spec:
   rules:
     - http:
         paths:
-          - path: /eo-tools
+          - path: /eo-tools/catalog
             pathType: Prefix
             backend:
               service:

@@ -5,20 +5,19 @@ IMAGE=""
 NODE_IP=""
 MANIFEST=""
 NAMESPACE="eo-tools"
-REST_DEPLOYMENT="eo-tools-catalog-rest"
-MCP_DEPLOYMENT="eo-tools-catalog-mcp"
+REST_DEPLOYMENT="eo-tools-raster-rest"
 RENDERED_MANIFEST=""
 
 usage() {
   cat <<'EOF'
 Usage:
-  deploy-catalog-remote.sh --image IMAGE --node-ip NODE_IP --manifest MANIFEST [--namespace NAMESPACE]
+  deploy-raster-remote.sh --image IMAGE --node-ip NODE_IP --manifest MANIFEST [--namespace NAMESPACE]
 
 Example:
-  deploy-catalog-remote.sh \
-    --image 10.168.162.111:5000/eo-tools-catalog:20260519120000 \
+  deploy-raster-remote.sh \
+    --image 10.168.162.111:5000/eo-tools-raster:20260519120000 \
     --node-ip 10.168.162.111 \
-    --manifest /tmp/eo-tools-catalog-deploy/eo-tools-catalog.yaml
+    --manifest /tmp/eo-tools-raster-deploy/eo-tools-raster.yaml
 EOF
 }
 
@@ -86,10 +85,10 @@ if ! sudo k3s crictl pull "$IMAGE"; then
   exit 1
 fi
 
-RENDERED_MANIFEST="$(dirname "$MANIFEST")/eo-tools-catalog.rendered.yaml"
+RENDERED_MANIFEST="$(dirname "$MANIFEST")/eo-tools-raster.rendered.yaml"
 
 awk -v image="$IMAGE" '
-  /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /(^|\/)eo-tools-catalog:/ {
+  /^[[:space:]]*image:[[:space:]]*/ && $0 ~ /(^|\/)eo-tools-raster:/ {
     sub(/image:[[:space:]].*$/, "image: " image)
   }
   { print }
@@ -100,34 +99,32 @@ if ! grep -Fq "image: ${IMAGE}" "$RENDERED_MANIFEST"; then
   exit 1
 fi
 
+DEPLOYMENT_EXISTS=0
+if sudo k3s kubectl -n "$NAMESPACE" get deploy "$REST_DEPLOYMENT" >/dev/null 2>&1; then
+  DEPLOYMENT_EXISTS=1
+fi
+
 sudo k3s kubectl apply -f "$RENDERED_MANIFEST"
 
-sudo k3s kubectl -n "$NAMESPACE" rollout restart "deploy/${REST_DEPLOYMENT}"
-
-if sudo k3s kubectl -n "$NAMESPACE" get deploy "$MCP_DEPLOYMENT" >/dev/null 2>&1; then
-  sudo k3s kubectl -n "$NAMESPACE" rollout restart "deploy/${MCP_DEPLOYMENT}"
+if [[ "$DEPLOYMENT_EXISTS" == "1" ]]; then
+  sudo k3s kubectl -n "$NAMESPACE" rollout restart "deploy/${REST_DEPLOYMENT}"
 fi
 
 sudo k3s kubectl -n "$NAMESPACE" rollout status "deploy/${REST_DEPLOYMENT}"
-
-if sudo k3s kubectl -n "$NAMESPACE" get deploy "$MCP_DEPLOYMENT" >/dev/null 2>&1; then
-  sudo k3s kubectl -n "$NAMESPACE" rollout status "deploy/${MCP_DEPLOYMENT}"
-fi
-
-sudo k3s kubectl -n "$NAMESPACE" get pods,svc,ingress
+sudo k3s kubectl -n "$NAMESPACE" get pods,svc,ingress,pvc
 
 echo ""
 echo "Validating REST endpoints through Traefik:"
-curl -fsS "http://${NODE_IP}/eo-tools/catalog/health"
+curl -fsS "http://${NODE_IP}/eo-tools/raster/health"
 echo ""
-curl -fsS "http://${NODE_IP}/eo-tools/catalog/" >/dev/null
+curl -fsS "http://${NODE_IP}/eo-tools/raster/" >/dev/null
 echo "Tool list OK"
-if curl -fsS --max-time 60 "http://${NODE_IP}/eo-tools/catalog/openapi.json" >/dev/null; then
+if curl -fsS --max-time 60 "http://${NODE_IP}/eo-tools/raster/openapi.json" >/dev/null; then
   echo "OpenAPI OK"
 else
   echo "OpenAPI validation skipped after timeout or non-2xx response." >&2
-  echo "Deployment is healthy; check /eo-tools/catalog/docs manually if needed." >&2
+  echo "Deployment is healthy; check /eo-tools/raster/docs manually if needed." >&2
 fi
 echo ""
 echo "Expected browser URL:"
-echo "  http://${NODE_IP}/eo-tools/catalog/docs"
+echo "  http://${NODE_IP}/eo-tools/raster/docs"

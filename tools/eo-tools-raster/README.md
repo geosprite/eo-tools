@@ -1,12 +1,33 @@
 # eo-tools-raster
 
-Raster tools for Earth Observation Tools.
+Tool registration and orchestration package for raster capabilities.
 
-This package provides raster crop, mosaic, stack, information and composite
-tools under `geosprite.eo.tools.raster`. It depends on `eo-tools-core` for
-the shared tool protocol and registry helpers, `eo-stac` from `../eo-libs/stac`
-for asset models, and `eo-io` from `../eo-libs/io` for GDAL-backed raster I/O
-helpers.
+This package depends on `eo-raster` for GDAL raster operators, on `eo-store` for
+the shared overwrite policy enum, and on `eo-tools-core` for tool discovery.
 
-When installed, the package is discovered through the `geosprite.eo.tools`
-Python entry point group.
+## Current Tools
+
+| Tool | Purpose |
+| --- | --- |
+| `raster.stack` | Stack same-extent single-band raster inputs. |
+| `raster.stack_rgb` | Stack three same-extent single-band raster inputs into an 8-bit RGB raster. |
+| `raster.compose` | Compose same-extent single-band raster inputs by max, min, or median. |
+
+## IO Policy
+
+- Raster tools run directly through `eo-raster`.
+- `input_files` are passed to `eo-raster` unchanged.
+- `output_file` must be a local or relative path. Relative paths are resolved
+  under `ToolContext.workdir`.
+- Legacy split fields are not accepted: use `output_file`, not `output_uri` or
+  `write_back`.
+- Local outputs use `overwrite` as the existence policy:
+  - `deny` returns an existing local file immediately without reprocessing;
+  - `replace` regenerates the raster and overwrites the local file.
+- Response `write_back` reports whether this request wrote a new output:
+  `true` for generated local outputs, `false` when an existing output was
+  returned.
+- Direct execution rejects `s3://` outputs. Stage remote inputs or upload
+  outputs outside `eo-tools-raster` when Store behavior is needed.
+- `publish_catalog` is explicit and defaults to false. The current raster tools
+  reject true until Catalog publication is added as a later orchestration step.

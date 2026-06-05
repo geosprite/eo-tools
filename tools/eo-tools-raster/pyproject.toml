@@ -5,18 +5,16 @@ build-backend = "hatchling.build"
 [project]
 name = "eo-tools-raster"
 version = "0.1.0"
-description = "Raster crop, mosaic, stack and composite tools for Earth Observation Tools."
+description = "Raster tool registration and orchestration for Earth Observation Tools."
 authors = [{ name = "Jia Song", email = "geosprite2020@gmail.com" }]
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "eo-tools-core",
-    "eo-io[gdal]",
-    "eo-catalog-core",
+    "eo-io",
+    "eo-raster",
     "eo-store",
-    "mercantile",
-    "pyproj",
+    "eo-tools-core",
 ]
 
 [project.urls]
@@ -29,7 +27,7 @@ raster = "geosprite.eo.tools.raster"
 packages = ["src/geosprite"]
 
 [tool.uv.sources]
-eo-tools-core = { workspace = true }
 eo-io = { workspace = true }
+eo-raster = { workspace = true }
 eo-store = { workspace = true }
-eo-catalog-core = { workspace = true }
+eo-tools-core = { workspace = true }

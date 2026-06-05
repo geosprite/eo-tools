@@ -10,11 +10,11 @@ from collections.abc import Sequence
 from typing import Any
 
 from ..core import (
-    default_context_factory,
     describe_tool,
     dump_tool_output,
     execute_tool,
     load_registry,
+    store_context_factory,
 )
 
 from .mcp import main as mcp_main
@@ -28,6 +28,23 @@ def _add_tool_package_args(parser: argparse.ArgumentParser) -> None:
         help=(
             "Import path for a tool package. "
             "When omitted, installed eo-tools entry points are discovered."
+        ),
+    )
+
+
+def _add_workdir_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--workdir",
+        help="Tool runtime workspace used for local outputs and staging.",
+    )
+
+
+def _add_store_config_arg(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
+        "--store-config",
+        help=(
+            "Optional JSON Store config. When omitted, the runtime uses the "
+            "default Store if eo-store is installed."
         ),
     )
 
@@ -54,7 +71,10 @@ async def _run_tool(args: argparse.Namespace) -> None:
     tool = registry.get(args.tool_name)
     output = await execute_tool(
         tool,
-        default_context_factory()(args.run_id),
+        store_context_factory(
+            store_config=args.store_config,
+            workdir=args.workdir,
+        )(args.run_id),
         _load_arguments(args),
     )
     _print_json(dump_tool_output(output))
@@ -94,6 +114,8 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser.add_argument("--json", help="Tool input as a JSON object.")
     run_parser.add_argument("--json-file", help="Path to a JSON input file.")
     run_parser.add_argument("--run-id")
+    _add_workdir_arg(run_parser)
+    _add_store_config_arg(run_parser)
 
     rest_parser = subparsers.add_parser(
         "serve-rest",
@@ -107,6 +129,16 @@ def build_parser() -> argparse.ArgumentParser:
         default="",
         help="ASGI root path used when serving behind a path-prefix proxy.",
     )
+    rest_parser.add_argument(
+        "--service-path",
+        default="",
+        help=(
+            "Path inside the app for service-level endpoints such as docs, "
+            "OpenAPI, health, and tool listing."
+        ),
+    )
+    _add_workdir_arg(rest_parser)
+    _add_store_config_arg(rest_parser)
 
     mcp_parser = subparsers.add_parser(
         "serve-mcp",
@@ -115,6 +147,8 @@ def build_parser() -> argparse.ArgumentParser:
     _add_tool_package_args(mcp_parser)
     mcp_parser.add_argument("--name", default="eo-tools")
     mcp_parser.add_argument("--version", default="0.1.0")
+    _add_workdir_arg(mcp_parser)
+    _add_store_config_arg(mcp_parser)
 
     return parser
 
@@ -134,8 +168,21 @@ def main(argv: Sequence[str] | None = None) -> None:
             for item in ("--tool-package", package)
         ]
         rest_argv.extend(
-            ["--host", args.host, "--port", str(args.port), "--root-path", args.root_path]
+            [
+                "--host",
+                args.host,
+                "--port",
+                str(args.port),
+                "--root-path",
+                args.root_path,
+                "--service-path",
+                args.service_path,
+            ]
         )
+        if args.workdir is not None:
+            rest_argv.extend(["--workdir", args.workdir])
+        if args.store_config is not None:
+            rest_argv.extend(["--store-config", args.store_config])
         rest_main(rest_argv)
     elif args.command == "serve-mcp":
         mcp_argv = [
@@ -144,6 +191,10 @@ def main(argv: Sequence[str] | None = None) -> None:
             for item in ("--tool-package", package)
         ]
         mcp_argv.extend(["--name", args.name, "--version", args.version])
+        if args.workdir is not None:
+            mcp_argv.extend(["--workdir", args.workdir])
+        if args.store_config is not None:
+            mcp_argv.extend(["--store-config", args.store_config])
         mcp_main(mcp_argv)
 
 

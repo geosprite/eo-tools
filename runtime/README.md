@@ -21,6 +21,7 @@ Install only the runtime adapters a host needs:
 
 ```bash
 pip install -e runtime
+pip install -e "eo-tools-runtime[store]"
 pip install -e "eo-tools-runtime[rest]"
 pip install -e "eo-tools-runtime[mcp]"
 ```
@@ -49,6 +50,10 @@ eo-tools list
 eo-tools describe catalog.get_grs_systems
 eo-tools run catalog.get_grs_systems --json '{}'
 eo-tools list --tool-package geosprite.eo.tools.catalog
+eo-tools run raster.compose \
+  --tool-package geosprite.eo.tools.raster \
+  --store-config ../eo-infra/store/local/store.minio.example.json \
+  --json-file compose.json
 ```
 
 ## REST
@@ -67,6 +72,8 @@ eo-tools serve-rest --port 8000
 eo-tools serve-rest \
   --tool-package geosprite.eo.tools.catalog \
   --tool-package geosprite.eo.tools.raster \
+  --workdir ./work \
+  --store-config ../eo-infra/store/local/store.minio.example.json \
   --port 8000
 ```
 
@@ -84,7 +91,20 @@ Or run an MCP stdio server:
 ```bash
 eo-tools serve-mcp
 eo-tools serve-mcp --tool-package geosprite.eo.tools.catalog
+eo-tools serve-mcp \
+  --tool-package geosprite.eo.tools.raster \
+  --workdir ./work \
+  --store-config ../eo-infra/store/local/store.minio.example.json
 ```
 
 REST, MCP, and CLI are sibling adapters. They share protocol-neutral execution
 helpers, but do not depend on each other.
+
+Runtime does not construct Catalog or other domain services. Tools that need
+host services receive them through `ToolContext`. Programmatic REST and MCP
+hosts can pass a custom `context_factory`.
+
+Store injection is optional. The built-in CLI, REST runner, and MCP runner load
+`eo-store` lazily only when `--store-config` is supplied. Hosts that never pass
+that argument, such as catalog-only deployments, do not need to install
+`eo-store` or `eo-infra`.

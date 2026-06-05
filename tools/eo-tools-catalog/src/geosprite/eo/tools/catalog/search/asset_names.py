@@ -18,7 +18,6 @@ class GetCollectionAssetsIn(BaseModel):
 @tool
 class GetCollectionAssetsTool(Tool[GetCollectionAssetsIn, DictResultOut]):
     name = "meta.assets"
-    version = "1.0.0"
     domain = "catalog"
     summary = "List available asset names for a STAC collection."
     description = "Return provider asset metadata for the requested collection."

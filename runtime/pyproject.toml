@@ -16,6 +16,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+store = [
+    "eo-store[s3,aria2]",
+]
 rest = [
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
@@ -24,6 +27,7 @@ mcp = [
     "mcp>=1.10",
 ]
 all = [
+    "eo-store[s3,aria2]",
     "fastapi>=0.115",
     "uvicorn[standard]>=0.30",
     "mcp>=1.10",
@@ -42,3 +46,4 @@ packages = ["src/geosprite"]
 
 [tool.uv.sources]
 eo-tools-core = { workspace = true }
+eo-store = { workspace = true }

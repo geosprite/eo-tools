@@ -5,7 +5,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.catalog import CatalogSearchRequest
+from geosprite.eo.catalog.reader import CatalogSearchRequest
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from . import get_catalog_service
@@ -52,7 +52,6 @@ class SearchMatchOut(BaseModel):
 @tool
 class SearchMatchTool(Tool[SearchMatchIn, SearchMatchOut]):
     name = "match"
-    version = "1.0.0"
     domain = "catalog"
     summary = "Search and optionally match items across STAC collections."
     description = "Query multiple collections, optionally matching scenes by time and spatial overlap."

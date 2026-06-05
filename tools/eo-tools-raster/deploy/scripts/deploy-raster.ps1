@@ -2,9 +2,9 @@ param(
     [string]$SshHost = "jsong@10.168.162.111",
     [string]$K3sNodeIp = "10.168.162.111",
     [string]$RegistryHost = "10.168.162.111:5000",
-    [string]$ImageName = "eo-tools-catalog",
+    [string]$ImageName = "eo-tools-raster",
     [string]$ImageTag = "",
-    [string]$RemoteDir = "/tmp/eo-tools-catalog-deploy",
+    [string]$RemoteDir = "/tmp/eo-tools-raster-deploy",
     [switch]$NoBuild,
     [switch]$NoPush,
     [switch]$SkipRemote,
@@ -46,9 +46,9 @@ Require-Command ssh
 
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $eoRoot = Resolve-Path (Join-Path $scriptDir "..\..\..\..\..")
-$dockerfile = Join-Path $eoRoot "eo-tools\tools\eo-tools-catalog\deploy\docker\Dockerfile"
-$manifest = Join-Path $eoRoot "eo-tools\tools\eo-tools-catalog\deploy\k8s\eo-tools-catalog.yaml"
-$remoteScript = Join-Path $eoRoot "eo-tools\tools\eo-tools-catalog\deploy\scripts\deploy-catalog-remote.sh"
+$dockerfile = Join-Path $eoRoot "eo-tools\tools\eo-tools-raster\deploy\docker\Dockerfile"
+$manifest = Join-Path $eoRoot "eo-tools\tools\eo-tools-raster\deploy\k8s\eo-tools-raster.yaml"
+$remoteScript = Join-Path $eoRoot "eo-tools\tools\eo-tools-raster\deploy\scripts\deploy-raster-remote.sh"
 
 if (-not $RegistryHost) {
     $RegistryHost = "${K3sNodeIp}:5000"
@@ -70,7 +70,7 @@ if (-not $ImageTag) {
 
 $localImage = "${ImageName}:${ImageTag}"
 $remoteImage = "${RegistryHost}/${ImageName}:${ImageTag}"
-$renderedManifest = Join-Path $env:TEMP "eo-tools-catalog.$($ImageTag -replace '[^A-Za-z0-9_.-]', '_').yaml"
+$renderedManifest = Join-Path $env:TEMP "eo-tools-raster.$($ImageTag -replace '[^A-Za-z0-9_.-]', '_').yaml"
 
 Write-Host "EO root:       $eoRoot"
 Write-Host "SSH host:      $SshHost"
@@ -147,16 +147,16 @@ if (-not $SkipRemote) {
 
     Invoke-Step "Copy manifest and remote deploy script" {
         if ($DryRun) {
-            Write-Host "scp $renderedManifest ${SshHost}:${RemoteDir}/eo-tools-catalog.yaml"
-            Write-Host "scp $remoteScript ${SshHost}:${RemoteDir}/deploy-catalog-remote.sh"
+            Write-Host "scp $renderedManifest ${SshHost}:${RemoteDir}/eo-tools-raster.yaml"
+            Write-Host "scp $remoteScript ${SshHost}:${RemoteDir}/deploy-raster-remote.sh"
         } else {
-            Invoke-Native { scp $renderedManifest "${SshHost}:${RemoteDir}/eo-tools-catalog.yaml" }
-            Invoke-Native { scp $remoteScript "${SshHost}:${RemoteDir}/deploy-catalog-remote.sh" }
+            Invoke-Native { scp $renderedManifest "${SshHost}:${RemoteDir}/eo-tools-raster.yaml" }
+            Invoke-Native { scp $remoteScript "${SshHost}:${RemoteDir}/deploy-raster-remote.sh" }
         }
     }
 
     Invoke-Step "Apply deployment on k3s" {
-        $remoteCommand = "chmod +x '$RemoteDir/deploy-catalog-remote.sh' && '$RemoteDir/deploy-catalog-remote.sh' --image '$remoteImage' --node-ip '$K3sNodeIp' --manifest '$RemoteDir/eo-tools-catalog.yaml'"
+        $remoteCommand = "chmod +x '$RemoteDir/deploy-raster-remote.sh' && '$RemoteDir/deploy-raster-remote.sh' --image '$remoteImage' --node-ip '$K3sNodeIp' --manifest '$RemoteDir/eo-tools-raster.yaml'"
         if ($DryRun) {
             Write-Host "ssh -tt $SshHost `"$remoteCommand`""
         } else {
@@ -179,6 +179,6 @@ if (-not $SkipRemote) {
 Write-Host ""
 Write-Host "Deployment image: $remoteImage"
 Write-Host "Expected URLs:"
-Write-Host "  http://$K3sNodeIp/eo-tools/catalog/health"
-Write-Host "  http://$K3sNodeIp/eo-tools/catalog/"
-Write-Host "  http://$K3sNodeIp/eo-tools/catalog/docs"
+Write-Host "  http://$K3sNodeIp/eo-tools/raster/health"
+Write-Host "  http://$K3sNodeIp/eo-tools/raster/"
+Write-Host "  http://$K3sNodeIp/eo-tools/raster/docs"

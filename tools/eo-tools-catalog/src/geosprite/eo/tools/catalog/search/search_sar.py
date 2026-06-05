@@ -4,7 +4,8 @@ import asyncio
 
 from pydantic import Field
 
-from geosprite.eo.catalog import ItemCollection, CatalogSearchRequest
+from geosprite.eo.catalog.models import ItemCollection
+from geosprite.eo.catalog.reader import CatalogSearchRequest
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from . import catalog_service
@@ -16,7 +17,6 @@ class SearchSARRequest(CatalogSearchRequest):
 @tool
 class SearchSARTool(Tool[SearchSARRequest, ItemCollection]):
     name = "search.sar"
-    version = "1.0.0"
     domain = "catalog"
     summary = "Search SAR imagery from STAC providers."
     description = "Search SAR collections and return a STAC FeatureCollection."

@@ -5,8 +5,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from geosprite.eo.catalog import Asset, Item
-from geosprite.eo.catalog.protocols.stac import StacPublishClient
+from geosprite.eo.catalog.models import Asset, Item
+from geosprite.eo.catalog.writer import CatalogPublishService
 from geosprite.eo.catalog.models import build_item_from_assets
 from geosprite.eo.tools import Tool, ToolContext, tool
 
@@ -28,7 +28,6 @@ class PublishItemIn(BaseModel):
 @tool
 class PublishItemTool(Tool[PublishItemIn, Item]):
     name = "publish.item"
-    version = "1.0.0"
     domain = "catalog"
     summary = "Create or update an item in a STAC API."
     description = "Publishes a processing/model result Item through STAC API transaction endpoints."
@@ -39,11 +38,17 @@ class PublishItemTool(Tool[PublishItemIn, Item]):
         item = inputs.item or self._build_item(inputs)
         if item.collection is None:
             item.collection = inputs.collection
-        client = StacPublishClient(inputs.stac_url, token=inputs.token)
+        service = CatalogPublishService()
+        request = {
+            "endpoint_url": inputs.stac_url,
+            "collection_id": inputs.collection,
+            "item": item,
+            "token": inputs.token,
+        }
         loop = asyncio.get_running_loop()
         if inputs.upsert:
-            return await loop.run_in_executor(None, lambda: client.upsert_item(inputs.collection, item))
-        return await loop.run_in_executor(None, lambda: client.create_item(inputs.collection, item))
+            return await loop.run_in_executor(None, lambda: service.upsert_item(request))
+        return await loop.run_in_executor(None, lambda: service.create_item(request))
 
     @staticmethod
     def _build_item(inputs: PublishItemIn) -> Item:
