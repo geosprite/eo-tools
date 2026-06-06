@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import Field
 
 from geosprite.eo.raster import stack_images, stack_rgb_images
-from geosprite.eo.store import OverwritePolicy, localize_files
+from geosprite.eo.store import localize_files
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .models import RasterOperationIn, RasterOperationOut, local_output_path
@@ -46,7 +46,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
         output = local_output_path(ctx.workdir, inputs.output_file, "stack.tif")
-        if inputs.overwrite == OverwritePolicy.DENY and output.is_file():
+        if not inputs.overwrite and output.is_file():
             return RasterOperationOut(
                 local_path=str(output),
                 destination_uri=None,
@@ -87,7 +87,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
         output = local_output_path(ctx.workdir, inputs.output_file, "rgb.tif")
-        if inputs.overwrite == OverwritePolicy.DENY and output.is_file():
+        if not inputs.overwrite and output.is_file():
             return RasterOperationOut(
                 local_path=str(output),
                 destination_uri=None,

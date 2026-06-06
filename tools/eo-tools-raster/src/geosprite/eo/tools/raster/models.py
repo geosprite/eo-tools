@@ -8,8 +8,6 @@ from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from geosprite.eo.store import OverwritePolicy
-
 
 class RasterOperationIn(BaseModel):
     """Shared local IO controls for raster tools."""
@@ -20,15 +18,27 @@ class RasterOperationIn(BaseModel):
         min_length=1,
         description="Raster input paths or URIs passed directly to eo-raster.",
     )
+    localization_bucket: str | None = Field(
+        default=None,
+        description=(
+            "Optional S3 bucket used to localize remote input_files before processing. "
+            "When set, operators receive localized s3:// URIs; when omitted, URI "
+            "inputs are fetched to the runtime workspace."
+        ),
+    )
+    localization_prefix: str = Field(
+        default="eo-store/localized",
+        description="S3 object key prefix used with localization_bucket.",
+    )
     output_file: str | None = Field(
         default=None,
         description=(
             "Raster output target. Local paths write locally; s3:// outputs are not supported."
         ),
     )
-    overwrite: OverwritePolicy = Field(
-        default=OverwritePolicy.DENY,
-        description="Local output overwrite policy.",
+    overwrite: bool = Field(
+        default=False,
+        description="Whether to regenerate and replace an existing local output.",
     )
     publish_catalog: bool = Field(
         default=False,

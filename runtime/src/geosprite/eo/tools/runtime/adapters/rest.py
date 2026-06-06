@@ -45,11 +45,19 @@ def create_app(
     """
 
     FastAPI, Header, HTTPException = _import_fastapi()
+
     build_context = context_factory or default_context_factory()
-    service_path = _normalize_service_path(service_path)
+
+    service_path = service_path.strip()
+    if not service_path or service_path == "/":
+        service_path = ""
+    else:
+        service_path = "/" + service_path.strip("/")
+
     docs_url = f"{service_path}/docs" if service_path else "/docs"
     openapi_url = f"{service_path}/openapi.json" if service_path else "/openapi.json"
     redoc_url = f"{service_path}/redoc" if service_path else "/redoc"
+
     app = FastAPI(
         title=title,
         version=version,
@@ -63,22 +71,25 @@ def create_app(
         return {"status": "ok"}
 
     async def list_tools() -> list[dict[str, Any]]:
-        return [describe_tool(tool).model_dump(mode="json") for tool in registry]
+        return [describe_tool(_tool).model_dump(mode="json") for _tool in registry]
 
     async def get_tool(tool_name: str) -> dict[str, Any]:
         try:
-            tool = registry.get(tool_name)
+            _tool = registry.get(tool_name)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
-        return describe_tool(tool).model_dump(mode="json")
+
+        return describe_tool(_tool).model_dump(mode="json")
 
     app.get("/health", include_in_schema=not service_path)(health)
     app.get("/", include_in_schema=not service_path)(list_tools)
+
     if service_path:
         app.get(f"{service_path}/health")(health)
         app.get(service_path, name="List tools")(list_tools)
         app.get(f"{service_path}/", include_in_schema=False)(list_tools)
         app.get(f"{service_path}/{{tool_name}}", name="Get tool")(get_tool)
+
     app.get("/{tool_name}", include_in_schema=not service_path)(get_tool)
 
     for tool in registry:
@@ -87,22 +98,15 @@ def create_app(
     return app
 
 
-def _normalize_service_path(service_path: str) -> str:
-    service_path = service_path.strip()
-    if not service_path or service_path == "/":
-        return ""
-    return "/" + service_path.strip("/")
-
-
 def _add_tool_route(
     app: Any,
     tool: Tool,
     context_factory: ContextFactory,
-    Header: Any,
+    header: Any,
 ) -> None:
     async def run_tool(
         inputs: Any,
-        x_run_id: str | None = Header(default=None),
+        x_run_id: str | None = header(default=None),
     ) -> Any:
         output = await execute_tool(
             tool,

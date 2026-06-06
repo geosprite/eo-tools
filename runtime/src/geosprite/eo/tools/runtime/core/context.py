@@ -14,8 +14,8 @@ ContextFactory = Callable[[str | None], ToolContext]
 
 
 @dataclass(slots=True)
-class LocalToolContext:
-    """Minimal context implementation for local hosts and smoke tests."""
+class RuntimeToolContext:
+    """Default runtime context implementation for local hosts and smoke tests."""
 
     store: Any = None
     workdir: Path = field(default_factory=Path.cwd)
@@ -37,7 +37,7 @@ def default_context_factory(
     resolved_logger = logger or logging.getLogger("geosprite.eo.tools.runtime")
 
     def build_context(run_id: str | None = None) -> ToolContext:
-        return LocalToolContext(
+        return RuntimeToolContext(
             store=store,
             workdir=resolved_workdir,
             logger=resolved_logger,
@@ -71,7 +71,8 @@ def store_context_factory(
 
 def _default_store_if_available() -> object | None:
     try:
-        from geosprite.eo.store import StoreService
+        from geosprite.eo.store import Store
     except ImportError:
         return None
-    return StoreService.with_defaults()
+
+    return Store.with_defaults()

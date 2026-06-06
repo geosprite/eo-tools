@@ -2,7 +2,7 @@
 
 from .context import (
     ContextFactory,
-    LocalToolContext,
+    RuntimeToolContext,
     default_context_factory,
     store_context_factory,
 )
@@ -11,7 +11,7 @@ from .loader import load_registry
 
 __all__ = [
     "ContextFactory",
-    "LocalToolContext",
+    "RuntimeToolContext",
     "ToolDescriptor",
     "default_context_factory",
     "describe_tool",

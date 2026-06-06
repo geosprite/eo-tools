@@ -3,7 +3,7 @@
 Tool registration and orchestration package for raster capabilities.
 
 This package depends on `eo-raster` for GDAL raster operators, on `eo-store` for
-the shared overwrite policy enum, and on `eo-tools-core` for tool discovery.
+input localization, and on `eo-tools-core` for tool discovery.
 
 ## Current Tools
 
@@ -16,14 +16,16 @@ the shared overwrite policy enum, and on `eo-tools-core` for tool discovery.
 ## IO Policy
 
 - Raster tools run directly through `eo-raster`.
-- `input_files` are passed to `eo-raster` unchanged.
+- URI `input_files` are localized by `eo-store`: with `localization_bucket`
+  they become deterministic `s3://` URIs; otherwise they become temporary local
+  paths.
 - `output_file` must be a local or relative path. Relative paths are resolved
   under `ToolContext.workdir`.
 - Legacy split fields are not accepted: use `output_file`, not `output_uri` or
   `write_back`.
-- Local outputs use `overwrite` as the existence policy:
-  - `deny` returns an existing local file immediately without reprocessing;
-  - `replace` regenerates the raster and overwrites the local file.
+- Local outputs use boolean `overwrite` as the existence policy:
+  - `false` returns an existing local file immediately without reprocessing;
+  - `true` regenerates the raster and overwrites the local file.
 - Response `write_back` reports whether this request wrote a new output:
   `true` for generated local outputs, `false` when an existing output was
   returned.
