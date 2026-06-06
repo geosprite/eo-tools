@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import Field
 
 from geosprite.eo.raster import stack_images, stack_rgb_images
-from geosprite.eo.store import localize_files
+from geosprite.eo.store import localize_url_inputs
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .models import RasterOperationIn, RasterOperationOut, local_output_path
@@ -40,7 +40,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
     InputModel = StackRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_files(preserve_path_structure=True)
+    @localize_url_inputs(preserve_path_structure=True)
     async def run(self, ctx: ToolContext, inputs: StackRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
@@ -81,7 +81,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
     InputModel = StackRgbRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_files(preserve_path_structure=True)
+    @localize_url_inputs(preserve_path_structure=True)
     async def run(self, ctx: ToolContext, inputs: StackRgbRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")

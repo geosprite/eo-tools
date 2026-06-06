@@ -8,7 +8,7 @@ from pathlib import Path
 from pydantic import Field
 
 from geosprite.eo.raster import CompositionMethod, compose_images
-from geosprite.eo.store import localize_files
+from geosprite.eo.store import localize_url_inputs
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .models import RasterOperationIn, RasterOperationOut, local_output_path
@@ -35,7 +35,7 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
     InputModel = ComposeRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_files(preserve_path_structure=True)
+    @localize_url_inputs(preserve_path_structure=True)
     async def run(self, ctx: ToolContext, inputs: ComposeRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
