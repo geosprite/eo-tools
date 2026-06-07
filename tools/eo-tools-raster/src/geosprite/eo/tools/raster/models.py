@@ -26,8 +26,8 @@ class RasterOperationIn(BaseModel):
             "inputs are fetched to the runtime workspace."
         ),
     )
-    localization_prefix: str = Field(
-        default="eo-store/localized",
+    localization_prefix: str | None = Field(
+        default=None,
         description="S3 object key prefix used with localization_bucket.",
     )
     output_file: str | None = Field(
