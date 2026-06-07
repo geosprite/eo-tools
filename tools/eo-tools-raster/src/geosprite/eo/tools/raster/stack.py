@@ -58,7 +58,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
         loop = asyncio.get_running_loop()
         result_path = await loop.run_in_executor(
             None,
-            lambda: stack_images(inputs.input_files, str(output)),
+            lambda: stack_images(inputs.input_files, str(output), output_format="COG"),
         )
 
         return RasterOperationOut(
@@ -100,10 +100,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
         loop = asyncio.get_running_loop()
         result_path = await loop.run_in_executor(
             None,
-            lambda: stack_rgb_images(
-                inputs.input_files,
-                str(output)
-            ),
+            lambda: stack_rgb_images(inputs.input_files, str(output), output_format="COG"),
         )
         return RasterOperationOut(
             local_path=str(Path(result_path)),
