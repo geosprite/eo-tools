@@ -57,15 +57,16 @@ def store_context_factory(
 
     if store_config is not None:
         try:
-            from geosprite.eo.store import load_store_config
+            from geosprite.eo.store import Store
         except ImportError as exc:
             raise ImportError(
                 "Store config support requires `eo-store`. "
                 "Install `eo-tools-runtime[store]` or install `eo-store`."
             ) from exc
-        store = load_store_config(store_config)
+        store = Store.with_config(store_config)
     else:
         store = _default_store_if_available()
+
     return default_context_factory(store=store, workdir=workdir, logger=logger)
 
 
