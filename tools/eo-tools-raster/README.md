@@ -16,11 +16,13 @@ input localization, and on `eo-tools-core` for tool discovery.
 ## IO Policy
 
 - Raster tools run directly through `eo-raster`.
-- URI `input_files` are localized by `eo-store`: with `localization_bucket`
+- URI `input_files` are localized by `eo-store`: with `bucket`
   they become deterministic `s3://` URIs; otherwise they become temporary local
   paths.
 - `output_file` must be a local or relative path. Relative paths are resolved
   under `ToolContext.workdir`.
+- `output_format` is passed to GDAL through `eo-raster` and defaults to `COG`.
+  Use `GTiff` to force a regular GeoTIFF output for comparison or debugging.
 - Legacy split fields are not accepted: use `output_file`, not `output_uri` or
   `write_back`.
 - Local outputs use boolean `overwrite` as the existence policy:

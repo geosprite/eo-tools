@@ -53,7 +53,12 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
         loop = asyncio.get_running_loop()
         result_path = await loop.run_in_executor(
             None,
-            lambda: compose_images(inputs.input_files, str(output), method=inputs.method),
+            lambda: compose_images(
+                inputs.input_files,
+                str(output),
+                method=inputs.method,
+                output_format=inputs.output_format,
+            ),
         )
 
         return RasterOperationOut(

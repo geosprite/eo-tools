@@ -87,12 +87,45 @@ class RasterToolTests(unittest.TestCase):
 
             stacked = gdal.Open(result.local_path)
             self.assertEqual(stacked.RasterCount, 2)
+            self.assertEqual(stacked.GetMetadata("IMAGE_STRUCTURE").get("LAYOUT"), "COG")
             self.assertEqual(result.destination_uri, None)
             self.assertEqual(result.write_back, True)
             self.assertEqual(result.presigned_url, None)
             close = getattr(stacked, "Close", None)
             if callable(close):
                 close()
+
+    def test_stack_tool_can_override_output_format_to_geotiff(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            left = root / "left.tif"
+            right = root / "right.tif"
+            output = root / "stack.tif"
+            _write_tiff(left, 1)
+            _write_tiff(right, 2)
+
+            result = asyncio.run(
+                StackRasterTool().run(
+                    _Context(store=None, workdir=root),
+                    StackRasterIn(
+                        input_files=[str(left), str(right)],
+                        output_file=str(output),
+                        output_format="GTiff",
+                    ),
+                )
+            )
+
+            stacked = gdal.Open(result.local_path)
+            try:
+                self.assertEqual(stacked.RasterCount, 2)
+                image_structure = stacked.GetMetadata("IMAGE_STRUCTURE")
+                self.assertEqual(image_structure.get("COMPRESSION"), "DEFLATE")
+                self.assertEqual(image_structure.get("INTERLEAVE"), "BAND")
+                self.assertEqual(image_structure.get("PREDICTOR"), "2")
+            finally:
+                close = getattr(stacked, "Close", None)
+                if callable(close):
+                    close()
 
     def test_stack_tool_writes_relative_output_under_workdir(self):
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -28,13 +28,17 @@ class RasterOperationIn(BaseModel):
     )
     prefix: str | None = Field(
         default=None,
-        description="S3 object key prefix used with localization_bucket.",
+        description="S3 object key prefix used with bucket during input localization.",
     )
     output_file: str | None = Field(
         default=None,
         description=(
             "Raster output target. Local paths write locally; s3:// outputs are not supported."
         ),
+    )
+    output_format: str = Field(
+        default="COG",
+        description="GDAL output format passed to eo-raster, such as COG or GTiff.",
     )
     overwrite: bool = Field(
         default=False,
