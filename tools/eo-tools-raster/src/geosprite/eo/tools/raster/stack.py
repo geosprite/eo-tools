@@ -21,6 +21,10 @@ class StackRasterIn(RasterOperationIn):
 class StackRgbRasterIn(RasterOperationIn):
     """RGB raster stack inputs and output controls."""
 
+    output_format: str = Field(
+        default="JPEG_COG",
+        description="RGB stack output format. Defaults to JPEG-compressed COG for compact visual products.",
+    )
     input_files: list[str] = Field(
         min_length=3,
         max_length=3,

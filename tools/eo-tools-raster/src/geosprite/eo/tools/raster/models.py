@@ -38,7 +38,10 @@ class RasterOperationIn(BaseModel):
     )
     output_format: str = Field(
         default="COG",
-        description="GDAL output format passed to eo-raster, such as COG or GTiff.",
+        description=(
+            "GDAL output format passed to eo-raster. Use COG for DEFLATE COG, "
+            "GTiff for regular GeoTIFF, or JPEG_COG for JPEG-compressed COG."
+        ),
     )
     overwrite: bool = Field(
         default=False,

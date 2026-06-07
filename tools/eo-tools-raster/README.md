@@ -23,6 +23,8 @@ input localization, and on `eo-tools-core` for tool discovery.
   under `ToolContext.workdir`.
 - `output_format` is passed to GDAL through `eo-raster` and defaults to `COG`.
   Use `GTiff` to force a regular GeoTIFF output for comparison or debugging.
+  Use `JPEG_COG` for an 8-bit RGB JPEG-compressed COG, currently intended for
+  `raster.stack_rgb` preview/visual products.
 - Legacy split fields are not accepted: use `output_file`, not `output_uri` or
   `write_back`.
 - Local outputs use boolean `overwrite` as the existence policy:

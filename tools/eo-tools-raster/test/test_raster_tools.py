@@ -256,16 +256,55 @@ class RasterToolTests(unittest.TestCase):
             )
 
             stacked = gdal.Open(result.local_path)
-            self.assertEqual(stacked.RasterCount, 3)
-            self.assertEqual(stacked.GetRasterBand(1).DataType, gdal.GDT_Byte)
-            self.assertEqual(stacked.GetRasterBand(1).GetColorInterpretation(), gdal.GCI_RedBand)
-            self.assertEqual(stacked.GetRasterBand(2).GetColorInterpretation(), gdal.GCI_GreenBand)
-            self.assertEqual(stacked.GetRasterBand(3).GetColorInterpretation(), gdal.GCI_BlueBand)
-            self.assertEqual(result.destination_uri, None)
-            self.assertEqual(result.write_back, True)
-            close = getattr(stacked, "Close", None)
-            if callable(close):
-                close()
+            try:
+                image_structure = stacked.GetMetadata("IMAGE_STRUCTURE")
+                self.assertEqual(stacked.RasterCount, 3)
+                self.assertEqual(stacked.GetRasterBand(1).DataType, gdal.GDT_Byte)
+                self.assertEqual(stacked.GetRasterBand(1).GetColorInterpretation(), gdal.GCI_RedBand)
+                self.assertEqual(stacked.GetRasterBand(2).GetColorInterpretation(), gdal.GCI_GreenBand)
+                self.assertEqual(stacked.GetRasterBand(3).GetColorInterpretation(), gdal.GCI_BlueBand)
+                self.assertEqual(image_structure.get("LAYOUT"), "COG")
+                self.assertIn("JPEG", image_structure.get("COMPRESSION", ""))
+                self.assertEqual(result.destination_uri, None)
+                self.assertEqual(result.write_back, True)
+            finally:
+                close = getattr(stacked, "Close", None)
+                if callable(close):
+                    close()
+
+    def test_stack_rgb_tool_can_write_jpeg_compressed_cog(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            red = root / "red.tif"
+            green = root / "green.tif"
+            blue = root / "blue.tif"
+            output = root / "rgb-jpeg-cog.tif"
+            _write_tiff(red, 10)
+            _write_tiff(green, 20)
+            _write_tiff(blue, 30)
+
+            result = asyncio.run(
+                StackRgbRasterTool().run(
+                    _Context(store=None, workdir=root),
+                    StackRgbRasterIn(
+                        input_files=[str(red), str(green), str(blue)],
+                        output_file=str(output),
+                        output_format="JPEG_COG",
+                    ),
+                )
+            )
+
+            stacked = gdal.Open(result.local_path)
+            try:
+                image_structure = stacked.GetMetadata("IMAGE_STRUCTURE")
+                self.assertEqual(stacked.RasterCount, 3)
+                self.assertEqual(stacked.GetRasterBand(1).DataType, gdal.GDT_Byte)
+                self.assertEqual(image_structure.get("LAYOUT"), "COG")
+                self.assertIn("JPEG", image_structure.get("COMPRESSION", ""))
+            finally:
+                close = getattr(stacked, "Close", None)
+                if callable(close):
+                    close()
 
     def test_stack_rgb_tool_requires_three_inputs(self):
         with self.assertRaises(ValidationError):
