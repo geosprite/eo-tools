@@ -23,12 +23,12 @@ class RuntimeContextTests(unittest.TestCase):
         self.assertEqual(ctx.run_id, "run-1")
 
     def test_store_context_factory_uses_default_store_without_config_when_available(self):
-        class StoreService:
+        class Store:
             @staticmethod
             def with_defaults() -> object:
                 return {"store": "default"}
 
-        fake_store_module = SimpleNamespace(StoreService=StoreService)
+        fake_store_module = SimpleNamespace(Store=Store)
         with patch.dict("sys.modules", {"geosprite.eo.store": fake_store_module}):
             ctx = store_context_factory(workdir="C:/work")("run-1")
 
@@ -39,11 +39,13 @@ class RuntimeContextTests(unittest.TestCase):
     def test_store_context_factory_lazy_loads_store_when_config_is_supplied(self):
         calls: list[str] = []
 
-        def load_store_config(path: str) -> object:
-            calls.append(path)
-            return {"store": path}
+        class Store:
+            @staticmethod
+            def with_config(path: str) -> object:
+                calls.append(path)
+                return {"store": path}
 
-        fake_store_module = SimpleNamespace(load_store_config=load_store_config)
+        fake_store_module = SimpleNamespace(Store=Store)
         with patch.dict("sys.modules", {"geosprite.eo.store": fake_store_module}):
             ctx = store_context_factory(store_config="store.json")()
 

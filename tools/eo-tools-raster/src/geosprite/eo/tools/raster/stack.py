@@ -40,7 +40,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
     InputModel = StackRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_url_inputs(preserve_path_structure=True)
+    @localize_url_inputs
     async def run(self, ctx: ToolContext, inputs: StackRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
@@ -60,6 +60,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
             None,
             lambda: stack_images(inputs.input_files, str(output)),
         )
+
         return RasterOperationOut(
             local_path=str(Path(result_path)),
             destination_uri=None,
@@ -81,7 +82,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
     InputModel = StackRgbRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_url_inputs(preserve_path_structure=True)
+    @localize_url_inputs()
     async def run(self, ctx: ToolContext, inputs: StackRgbRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")

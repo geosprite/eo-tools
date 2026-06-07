@@ -35,7 +35,7 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
     InputModel = ComposeRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_url_inputs(preserve_path_structure=True)
+    @localize_url_inputs
     async def run(self, ctx: ToolContext, inputs: ComposeRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
@@ -55,6 +55,7 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
             None,
             lambda: compose_images(inputs.input_files, str(output), method=inputs.method),
         )
+
         return RasterOperationOut(
             local_path=str(Path(result_path)),
             destination_uri=None,
