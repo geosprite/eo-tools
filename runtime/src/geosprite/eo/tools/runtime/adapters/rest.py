@@ -93,7 +93,7 @@ def create_app(
     app.get("/{tool_name}", include_in_schema=not service_path)(get_tool)
 
     for tool in registry:
-        _add_tool_route(app, tool, build_context, Header)
+        _add_tool_route(app, tool, build_context, Header, HTTPException)
 
     return app
 
@@ -103,16 +103,20 @@ def _add_tool_route(
     tool: Tool,
     context_factory: ContextFactory,
     header: Any,
+    http_exception: Any,
 ) -> None:
     async def run_tool(
         inputs: Any,
         x_run_id: str | None = header(default=None),
     ) -> Any:
-        output = await execute_tool(
-            tool,
-            context_factory(x_run_id),
-            inputs.model_dump(mode="python"),
-        )
+        try:
+            output = await execute_tool(
+                tool,
+                context_factory(x_run_id),
+                inputs.model_dump(mode="python"),
+            )
+        except Exception as exc:
+            raise _tool_http_exception(exc, http_exception) from exc
         return output
 
     run_tool.__name__ = f"run_{tool.name.replace('.', '_')}"
@@ -133,6 +137,13 @@ def _add_tool_route(
         description=tool.description or None,
         response_model=tool.OutputModel,
     )(run_tool)
+
+
+def _tool_http_exception(exc: Exception, http_exception: Any) -> Exception:
+    """Convert tool/runtime failures into JSON HTTP errors instead of ASGI 500s."""
+
+    detail = str(exc) or exc.__class__.__name__
+    return http_exception(status_code=500, detail=detail)
 
 
 def main(argv: Sequence[str] | None = None) -> None:

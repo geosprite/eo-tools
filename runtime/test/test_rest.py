@@ -27,6 +27,20 @@ class EchoTool(Tool[EchoIn, EchoOut]):
         return EchoOut(value=inputs.value)
 
 
+class FailingTool(Tool[EchoIn, EchoOut]):
+    name = "fail"
+    domain = "catalog"
+    summary = "Fail predictably."
+    InputModel = EchoIn
+    OutputModel = EchoOut
+
+    def __init__(self, exc: Exception):
+        self.exc = exc
+
+    async def run(self, ctx: ToolContext, inputs: EchoIn) -> EchoOut:
+        raise self.exc
+
+
 class RestServicePathTests(unittest.TestCase):
     def test_service_path_moves_service_endpoints_without_prefixing_tool_routes(self):
         try:
@@ -49,6 +63,36 @@ class RestServicePathTests(unittest.TestCase):
         self.assertIn("/catalog/echo", schema["paths"])
         self.assertIn("/catalog/health", schema["paths"])
         self.assertNotIn("/catalog/catalog/echo", schema["paths"])
+
+    def test_tool_value_error_returns_json_server_error_response(self):
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            self.skipTest("FastAPI test client is not installed")
+
+        registry = ToolRegistry()
+        registry.register(FailingTool(ValueError("bad raster request")))
+        client = TestClient(create_app(registry))
+
+        response = client.post("/catalog/fail", json={"value": "x"})
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {"detail": "bad raster request"})
+
+    def test_unexpected_tool_error_returns_json_server_error_response(self):
+        try:
+            from fastapi.testclient import TestClient
+        except ImportError:
+            self.skipTest("FastAPI test client is not installed")
+
+        registry = ToolRegistry()
+        registry.register(FailingTool(RuntimeError("gdal failed")))
+        client = TestClient(create_app(registry))
+
+        response = client.post("/catalog/fail", json={"value": "x"})
+
+        self.assertEqual(response.status_code, 500)
+        self.assertEqual(response.json(), {"detail": "gdal failed"})
 
 
 if __name__ == "__main__":
