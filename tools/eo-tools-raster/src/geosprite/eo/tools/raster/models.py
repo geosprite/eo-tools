@@ -18,7 +18,7 @@ class RasterOperationIn(BaseModel):
         min_length=1,
         description="Raster input paths or URIs passed directly to eo-raster.",
     )
-    localization_bucket: str | None = Field(
+    bucket: str | None = Field(
         default=None,
         description=(
             "Optional S3 bucket used to localize remote input_files before processing. "
@@ -26,7 +26,7 @@ class RasterOperationIn(BaseModel):
             "inputs are fetched to the runtime workspace."
         ),
     )
-    localization_prefix: str | None = Field(
+    prefix: str | None = Field(
         default=None,
         description="S3 object key prefix used with localization_bucket.",
     )
