@@ -6,6 +6,7 @@ NODE_IP=""
 MANIFEST=""
 NAMESPACE="eo-tools"
 REST_DEPLOYMENT="eo-tools-snap-rest"
+WORK_PVC="eo-tools-snap-work"
 RENDERED_MANIFEST=""
 
 usage() {
@@ -104,13 +105,32 @@ if sudo k3s kubectl -n "$NAMESPACE" get deploy "$REST_DEPLOYMENT" >/dev/null 2>&
   DEPLOYMENT_EXISTS=1
 fi
 
+PVC_PHASE=""
+if PVC_PHASE="$(sudo k3s kubectl -n "$NAMESPACE" get pvc "$WORK_PVC" -o jsonpath='{.status.phase}' 2>/dev/null)"; then
+  if [[ "$PVC_PHASE" == "Pending" ]]; then
+    echo "Deleting pending PVC ${WORK_PVC}; the default snap deployment now uses emptyDir."
+    sudo k3s kubectl -n "$NAMESPACE" delete pvc "$WORK_PVC"
+  fi
+fi
+
 sudo k3s kubectl apply -f "$RENDERED_MANIFEST"
 
 if [[ "$DEPLOYMENT_EXISTS" == "1" ]]; then
   sudo k3s kubectl -n "$NAMESPACE" rollout restart "deploy/${REST_DEPLOYMENT}"
 fi
 
-sudo k3s kubectl -n "$NAMESPACE" rollout status "deploy/${REST_DEPLOYMENT}"
+if ! sudo k3s kubectl -n "$NAMESPACE" rollout status "deploy/${REST_DEPLOYMENT}" --timeout=15m; then
+  echo "" >&2
+  echo "Rollout did not complete. Current workload state:" >&2
+  sudo k3s kubectl -n "$NAMESPACE" get pods,pvc,svc,ingress -o wide >&2 || true
+  echo "" >&2
+  echo "Recent namespace events:" >&2
+  sudo k3s kubectl -n "$NAMESPACE" get events --sort-by=.lastTimestamp | tail -50 >&2 || true
+  echo "" >&2
+  echo "Pod description:" >&2
+  sudo k3s kubectl -n "$NAMESPACE" describe pod -l app.kubernetes.io/name=eo-tools-snap-rest >&2 || true
+  exit 1
+fi
 sudo k3s kubectl -n "$NAMESPACE" get pods,svc,ingress,pvc
 
 echo ""

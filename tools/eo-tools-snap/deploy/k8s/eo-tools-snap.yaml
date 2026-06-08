@@ -48,22 +48,6 @@ stringData:
       }
     }
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: eo-tools-snap-work
-  namespace: eo-tools
-  labels:
-    app.kubernetes.io/name: eo-tools-snap
-    app.kubernetes.io/part-of: eo-tools
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: local-path
-  resources:
-    requests:
-      storage: 200Gi
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -140,8 +124,8 @@ spec:
             failureThreshold: 3
           resources:
             requests:
-              cpu: "2"
-              memory: 8Gi
+              cpu: 500m
+              memory: 2Gi
             limits:
               cpu: "4"
               memory: 16Gi
@@ -183,8 +167,8 @@ spec:
               mountPath: /work
           resources:
             requests:
-              cpu: 250m
-              memory: 512Mi
+              cpu: 100m
+              memory: 256Mi
             limits:
               cpu: "1"
               memory: 2Gi
@@ -198,8 +182,8 @@ spec:
                 - ALL
       volumes:
         - name: work
-          persistentVolumeClaim:
-            claimName: eo-tools-snap-work
+          emptyDir:
+            sizeLimit: 100Gi
         - name: store-config
           secret:
             secretName: eo-tools-snap-store-config

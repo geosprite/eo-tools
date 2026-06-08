@@ -61,6 +61,12 @@ http://10.168.162.111/eo-tools/snap/health
 http://10.168.162.111/eo-tools/snap/docs
 ```
 
+The default k3s manifest uses `emptyDir` for `/work`. This avoids failures when
+the k3s `rancher.io/local-path` provisioner is slow or unhealthy. If persistent
+workspace storage is required and the provisioner is healthy, apply
+`k8s/eo-tools-snap-pvc-work.patch.yaml` after the base manifest or adapt it to
+your cluster storage class.
+
 ## Store and Aria2
 
 The REST container and Aria2 RPC container share `/work`. Aria2 writes staged

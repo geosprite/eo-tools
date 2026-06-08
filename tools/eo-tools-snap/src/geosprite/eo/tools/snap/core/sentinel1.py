@@ -56,11 +56,11 @@ def preprocess(
         ImportError: If esa_snappy is not available
         RuntimeError: If processing fails
     """
-    # if _SNAP_IMPORT_ERROR is not None:
-    #     raise ImportError(
-    #         "ESA SNAP snappy module is not installed. "
-    #         "Please install SNAP and configure snappy Python bindings."
-    #     ) from _SNAP_IMPORT_ERROR
+    if _SNAP_IMPORT_ERROR is not None:
+        raise ImportError(
+            "ESA SNAP snappy module is not installed. "
+            "Please install SNAP and configure snappy Python bindings."
+        ) from _SNAP_IMPORT_ERROR
 
     outputs = output_files(input_file, polar_list, output_dir)
 
@@ -76,18 +76,18 @@ def preprocess(
 
         print("  Starting processing pipeline...")
 
-        # p = ProductIO.readProduct(input_file)
-        # p = _apply_orbit_file(p, jpy)
-        # p = _thermal_noise_removal(p)
-        # p = _remove_border_noise(p, jpy)
-        # p = _calibration(p, [pol])
-        # p = _speckle_filter(p, jpy)
-        # p = _terrain_correction(p)
-        # p = _linear_to_from_db(p)
-        # p = _to_int16(p, jpy)
+        p = ProductIO.readProduct(input_file)
+        p = _apply_orbit_file(p, jpy)
+        p = _thermal_noise_removal(p)
+        p = _remove_border_noise(p, jpy)
+        p = _calibration(p, [pol])
+        p = _speckle_filter(p, jpy)
+        p = _terrain_correction(p)
+        p = _linear_to_from_db(p)
+        p = _to_int16(p, jpy)
 
         print("  [SNAP] Writing intermediate file...")
-        # ProductIO.writeProduct(p, output_file, "GeoTiff")
+        ProductIO.writeProduct(p, output_file, "GeoTiff")
 
     return outputs
 

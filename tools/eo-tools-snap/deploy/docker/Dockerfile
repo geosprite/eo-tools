@@ -20,6 +20,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         aria2 \
         bash \
+        build-essential \
         ca-certificates \
         coreutils \
         curl \
@@ -32,7 +33,9 @@ RUN apt-get update \
         libxi6 \
         libxrender1 \
         libxtst6 \
+        libgdal-dev \
         python3 \
+        python3-dev \
         python3-gdal \
         python3-venv \
         wget \
@@ -42,6 +45,7 @@ RUN uv venv --python /usr/bin/python3 --system-site-packages /opt/venv
 
 RUN uv pip install --no-config --no-sources --no-cache \
         "numpy<2" \
+        "GDAL==$(gdal-config --version)" \
         "./eo-store[s3,aria2]" \
         ./eo-io \
         ./eo-raster \
@@ -51,10 +55,10 @@ RUN uv pip install --no-config --no-sources --no-cache \
 RUN uv pip install --no-config --no-sources --no-cache --no-deps \
         ./eo-tools/tools/eo-tools-snap
 
-RUN wget -O /tmp/esa-snap.sh "$SNAP_INSTALLER_URL" \
+RUN wget -q -O /tmp/esa-snap.sh "$SNAP_INSTALLER_URL" \
     && bash /tmp/esa-snap.sh -q -dir "$SNAP_HOME" \
     && rm /tmp/esa-snap.sh \
-    && python -m pip install --no-cache-dir esa-snappy \
+    && uv pip install --no-config --no-cache esa-snappy \
     && cd "$SNAP_HOME/bin" \
     && timeout 600 ./snappy-conf /opt/venv/bin/python || true \
     && python -c "import esa_snappy; from esa_snappy import ProductIO"
