@@ -9,21 +9,11 @@ Requires ESA SNAP with snappy Python bindings
 """
 
 import os
-from typing import List
 
 try:
-    import numpy as np
-except ImportError:
-    np = None
-try:
-    from osgeo import gdal, ogr, osr
-except ImportError:
-    gdal = None
-
-try:
-    from esa_snappy import ProductIO, GPF, HashMap, jpy
-except ImportError as e:
-    _SNAP_IMPORT_ERROR = e
+    from esa_snappy import GPF, HashMap, ProductIO, jpy
+except ImportError as exc:
+    _SNAP_IMPORT_ERROR = exc
     ProductIO = None
     GPF = None
     HashMap = None
@@ -31,14 +21,26 @@ except ImportError as e:
 else:
     _SNAP_IMPORT_ERROR = None
 
-__all__ = ["preprocess"]
 
+def output_files(
+    input_file: str,
+    polar_list: list[str],
+    output_dir: str,
+    prefix: str = "iw-",
+) -> list[str]:
+    resolved_dir = os.path.join(output_dir, os.path.dirname(input_file))
+    os.makedirs(resolved_dir, exist_ok=True)
+
+    return [
+        os.path.join(resolved_dir, prefix + pol + ".tif")
+        for pol in polar_list
+    ]
 
 def preprocess(
     input_file: str,
-    polar_list: List[str],
-    output_dir: str
-) -> List[str]:
+    polar_list: list[str],
+    output_dir: str,
+) -> list[str]:
     """
     Preprocess Sentinel-1 GRD data.
 
@@ -54,48 +56,156 @@ def preprocess(
         ImportError: If esa_snappy is not available
         RuntimeError: If processing fails
     """
-    if _SNAP_IMPORT_ERROR is not None:
-        raise ImportError(
-            "ESA SNAP snappy module is not installed. "
-            "Please install SNAP and configure snappy Python bindings."
-        ) from _SNAP_IMPORT_ERROR
+    # if _SNAP_IMPORT_ERROR is not None:
+    #     raise ImportError(
+    #         "ESA SNAP snappy module is not installed. "
+    #         "Please install SNAP and configure snappy Python bindings."
+    #     ) from _SNAP_IMPORT_ERROR
 
-    os.makedirs(output_dir, exist_ok=True)
-    basename = os.path.basename(input_file).replace('.SAFE', '').replace('.safe', '')
-    output_files = []
+    outputs = output_files(input_file, polar_list, output_dir)
 
-    for pol in polar_list:
-        output_filename = os.path.join(output_dir, f"{basename}_{pol}.tif")
-
-        print(f"Processing Sentinel-1 data:")
+    for pol, output_file in zip(polar_list, outputs):
+        print("Processing Sentinel-1 data:")
         print(f"  Input: {input_file}")
         print(f"  Polarization: {pol}")
-        print(f"  Output: {output_filename}")
+        print(f"  Output: {output_file}")
 
-        if os.path.isfile(output_filename):
-            print(f"  File already exists, skipping.")
-            output_files.append(output_filename)
+        if os.path.isfile(output_file):
+            print("  File already exists, skipping.")
             continue
 
-        print(f"  Starting processing pipeline...")
+        print("  Starting processing pipeline...")
 
-        p = ProductIO.readProduct(input_file)
-        p = _apply_orbit_file(p, jpy)
-        p = _thermal_noise_removal(p)
-        p = _remove_border_noise(p, jpy)
-        p = _calibration(p, [pol])
-        p = _speckle_filter(p, jpy)
-        p = _terrain_correction(p)
-        p = _linear_to_from_db(p)
-        p = _to_int16(p, jpy)
+        # p = ProductIO.readProduct(input_file)
+        # p = _apply_orbit_file(p, jpy)
+        # p = _thermal_noise_removal(p)
+        # p = _remove_border_noise(p, jpy)
+        # p = _calibration(p, [pol])
+        # p = _speckle_filter(p, jpy)
+        # p = _terrain_correction(p)
+        # p = _linear_to_from_db(p)
+        # p = _to_int16(p, jpy)
 
-        print(f"  [SNAP] Writing intermediate file...")
-        ProductIO.writeProduct(p, output_filename, "GeoTiff")
+        print("  [SNAP] Writing intermediate file...")
+        # ProductIO.writeProduct(p, output_file, "GeoTiff")
 
-        output_files.append(output_filename)
+    return outputs
 
-    return output_files
 
+def _apply_orbit_file(source, jpy):
+    """Apply precise orbit file"""
+    parameters = HashMap()
+    parameters.put('continueOnFail', True)
+    parameters.put('orbitType', 'Sentinel Precise (Auto Download)')
+    parameters.put('polyDegree', jpy.get_type('java.lang.Integer')(3))
+
+    return GPF.createProduct("Apply-Orbit-File", parameters, source)
+
+
+def _thermal_noise_removal(source):
+    """Remove thermal noise"""
+    parameters = HashMap()
+    parameters.put('reIntroduceThermalNoise', False)
+    parameters.put('removeThermalNoise', True)
+
+    return GPF.createProduct("ThermalNoiseRemoval", parameters, source)
+
+
+def _remove_border_noise(source, jpy):
+    """Remove GRD border noise"""
+    parameters = HashMap()
+    parameters.put('borderLimit', jpy.get_type('java.lang.Integer')(500))
+    parameters.put('trimThreshold', 0.5)
+
+    return GPF.createProduct("Remove-GRD-Border-Noise", parameters, source)
+
+
+def _calibration(source, polar_list: list[str]):
+    """Radiometric calibration"""
+    parameters = HashMap()
+    parameters.put('selectedPolarisations', ','.join(polar_list))
+    source_bands = ['Intensity_' + band for band in polar_list]
+    parameters.put('sourceBands', ','.join(source_bands))
+
+    return GPF.createProduct("Calibration", parameters, source)
+
+
+def _speckle_filter(source, jpy):
+    """Apply speckle filter"""
+    parameters = HashMap()
+    java_integer = jpy.get_type('java.lang.Integer')
+
+    parameters.put('filter', 'Refined Lee')
+    parameters.put('dumpingFactor', java_integer(2))
+    parameters.put('estimateENL', True)
+    parameters.put('filterSizeX', java_integer(3))
+    parameters.put('filterSizeY', java_integer(3))
+    parameters.put('numLooksStr', '1')
+    parameters.put('sigmaStr', '0.9')
+    parameters.put('targetWindowSizeStr', '3x3')
+    parameters.put('windowSize', '7x7')
+    parameters.put('sourceBands', ','.join(list(source.getBandNames())))
+
+    return GPF.createProduct("Speckle-Filter", parameters, source)
+
+
+def _terrain_correction(source, map_projection='AUTO:42001'):
+    """
+    Terrain correction with DEM.
+
+    Args:
+        source: Input product
+        map_projection: 'AUTO:42001' for auto UTM, 'WGS84(DD)' for WGS84 lat/lon
+    """
+    parameters = HashMap()
+    parameters.put('auxFile', 'Latest Auxiliary File')
+    parameters.put('demName', 'SRTM 1Sec HGT')
+    parameters.put('demResamplingMethod', 'BILINEAR_INTERPOLATION')
+    parameters.put('imgResamplingMethod', 'BILINEAR_INTERPOLATION')
+    parameters.put('mapProjection', map_projection)
+    parameters.put('nodataValueAtSea', False)
+    parameters.put('pixelSpacingInMeter', 10.0)
+    parameters.put('pixelSpacingInDegree', 8.983152841195215E-5)
+    parameters.put('saveDEM', False)
+    parameters.put('sourceBands', ','.join(list(source.getBandNames())))
+
+    return GPF.createProduct("Terrain-Correction", parameters, source)
+
+
+def _linear_to_from_db(source):
+    """Convert linear to dB scale"""
+    parameters = HashMap()
+    source_bands = list(source.getBandNames())
+    parameters.put('sourceBands', ','.join(source_bands))
+
+    return GPF.createProduct("LinearToFromdB", parameters, source)
+
+
+def _to_int16(source, jpy):
+    """Convert bands to int16 (multiply by 100)"""
+    source_bands = list(source.getBandNames())
+
+    band_descriptor = jpy.get_type(
+        'org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor'
+    )
+    target_bands = jpy.array(
+        'org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor',
+        len(source_bands),
+    )
+
+    for idx, source_band_name in enumerate(source_bands):
+        target_band = band_descriptor()
+        target_band.name = source_band_name
+        target_band.type = 'int16'
+        target_band.expression = "100 * " + source_band_name
+        target_bands[idx] = target_band
+
+    parameters = HashMap()
+    parameters.put('targetBands', target_bands)
+    return GPF.createProduct("BandMaths", parameters, source)
+
+
+__all__ = ["preprocess", "output_files", "output_filenames"]
 
 # def _remove_outer_border(tif_path, nodata_val=-32768):
 #     """
@@ -197,109 +307,3 @@ def preprocess(
 #     except Exception as e:
 #         print(f"  ⚠ Warning: Failed to remove outer border: {e}")
 #
-
-def _apply_orbit_file(source, jpy):
-    """Apply precise orbit file"""
-    parameters = HashMap()
-    parameters.put('continueOnFail', True)
-    parameters.put('orbitType', 'Sentinel Precise (Auto Download)')
-    parameters.put('polyDegree', jpy.get_type('java.lang.Integer')(3))
-
-    return GPF.createProduct("Apply-Orbit-File", parameters, source)
-
-
-def _thermal_noise_removal(source):
-    """Remove thermal noise"""
-    parameters = HashMap()
-    parameters.put('reIntroduceThermalNoise', False)
-    parameters.put('removeThermalNoise', True)
-
-    return GPF.createProduct("ThermalNoiseRemoval", parameters, source)
-
-
-def _remove_border_noise(source, jpy):
-    """Remove GRD border noise"""
-    parameters = HashMap()
-    parameters.put('borderLimit', jpy.get_type('java.lang.Integer')(500))
-    parameters.put('trimThreshold', 0.5)
-
-    return GPF.createProduct("Remove-GRD-Border-Noise", parameters, source)
-
-
-def _calibration(source, polar_list: list):
-    """Radiometric calibration"""
-    parameters = HashMap()
-    parameters.put('selectedPolarisations', ','.join(polar_list))
-    parameters.put('sourceBands', ','.join(['Intensity_' + band for band in polar_list]))
-
-    return GPF.createProduct("Calibration", parameters, source)
-
-
-def _speckle_filter(source, jpy):
-    """Apply speckle filter"""
-    parameters = HashMap()
-    JavaInteger = jpy.get_type('java.lang.Integer')
-
-    parameters.put('filter', 'Refined Lee')
-    parameters.put('dumpingFactor', JavaInteger(2))
-    parameters.put('estimateENL', True)
-    parameters.put('filterSizeX', JavaInteger(3))
-    parameters.put('filterSizeY', JavaInteger(3))
-    parameters.put('numLooksStr', '1')
-    parameters.put('sigmaStr', '0.9')
-    parameters.put('targetWindowSizeStr', '3x3')
-    parameters.put('windowSize', '7x7')
-    parameters.put('sourceBands', ','.join(list(source.getBandNames())))
-
-    return GPF.createProduct("Speckle-Filter", parameters, source)
-
-
-def _terrain_correction(source, map_projection='AUTO:42001'):
-    """
-    Terrain correction with DEM.
-
-    Args:
-        source: Input product
-        map_projection: 'AUTO:42001' for auto UTM, 'WGS84(DD)' for WGS84 lat/lon
-    """
-    parameters = HashMap()
-    parameters.put('auxFile', 'Latest Auxiliary File')
-    parameters.put('demName', 'SRTM 1Sec HGT')
-    parameters.put('demResamplingMethod', 'BILINEAR_INTERPOLATION')
-    parameters.put('imgResamplingMethod', 'BILINEAR_INTERPOLATION')
-    parameters.put('mapProjection', map_projection)
-    parameters.put('nodataValueAtSea', False)
-    parameters.put('pixelSpacingInMeter', 10.0)
-    parameters.put('pixelSpacingInDegree', 8.983152841195215E-5)
-    parameters.put('saveDEM', False)
-    parameters.put('sourceBands', ','.join(list(source.getBandNames())))
-
-    return GPF.createProduct("Terrain-Correction", parameters, source)
-
-
-def _linear_to_from_db(source):
-    """Convert linear to dB scale"""
-    parameters = HashMap()
-    sourceBands = list(source.getBandNames())
-    parameters.put('sourceBands', ','.join(sourceBands))
-
-    return GPF.createProduct("LinearToFromdB", parameters, source)
-
-
-def _to_int16(source, jpy):
-    """Convert bands to int16 (multiply by 100)"""
-    source_bands = list(source.getBandNames())
-
-    BandDescriptor = jpy.get_type('org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor')
-    target_bands = jpy.array('org.esa.snap.core.gpf.common.BandMathsOp$BandDescriptor', len(source_bands))
-
-    for idx, sourceBand_name in enumerate(source_bands):
-        targetBand = BandDescriptor()
-        targetBand.name = sourceBand_name
-        targetBand.type = 'int16'
-        targetBand.expression = "100 * " + sourceBand_name
-        target_bands[idx] = targetBand
-
-    parameters = HashMap()
-    parameters.put('targetBands', target_bands)
-    return GPF.createProduct("BandMaths", parameters, source)
