@@ -18,7 +18,7 @@ from geosprite.eo.tools import build_registry_from_package
 from geosprite.eo.tools.raster.composition import ComposeRasterIn, ComposeRasterTool
 from geosprite.eo.tools.raster.fetch import FetchRasterIn, FetchRasterTool
 from geosprite.eo.tools.raster.localization import LocalizeRasterTool
-from geosprite.eo.tools.raster.models import RasterLocalizationIn
+from geosprite.eo.tools.raster.models import RasterLocalizationIn, RasterOutput
 from geosprite.eo.tools.raster.stack import (
     StackRasterIn,
     StackRasterTool,
@@ -309,8 +309,26 @@ class RasterToolTests(unittest.TestCase):
             self.assertTrue(put_path.is_file())
             self.assertEqual(
                 put_path,
-                root / "work" / "raster" / "test-run" / "outputs" / "products" / "stack.tif",
+                root / "work" / "raster" / "test-run" / "products" / "stack.tif",
             )
+
+    def test_raster_output_omits_absent_run_id_from_remote_stage_path(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+
+            for run_id in (None, "", " ", "none", "None"):
+                with self.subTest(run_id=run_id):
+                    output = RasterOutput.from_context(
+                        _Context(store=_Store(), workdir=root / "work", run_id=run_id),
+                        "s3://products/stack.tif",
+                        "stack.tif",
+                        run_id=run_id,
+                    )
+
+                    self.assertEqual(
+                        output.local_path,
+                        root / "work" / "raster" / "products" / "stack.tif",
+                    )
 
     def test_stack_tool_normalizes_directory_s3_output(self):
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -343,7 +361,6 @@ class RasterToolTests(unittest.TestCase):
                 / "work"
                 / "raster"
                 / "test-run"
-                / "outputs"
                 / "products"
                 / "outputs"
                 / "stack.tif",
@@ -530,7 +547,6 @@ class RasterToolTests(unittest.TestCase):
                 / "work"
                 / "raster"
                 / "test-run"
-                / "outputs"
                 / "geosprite"
                 / "eo"
                 / "raster"
@@ -652,7 +668,7 @@ class RasterToolTests(unittest.TestCase):
                 )
             )
 
-            expected_local = root / "work" / "raster" / "test-run" / "fetch" / "products" / "raw" / "source.tif"
+            expected_local = root / "work" / "raster" / "test-run" / "products" / "raw" / "source.tif"
             self.assertEqual(Path(result.local_path), expected_local)
             self.assertEqual(result.destination_uri, destination)
             self.assertEqual(result.presigned_url, "https://signed.example.test/products/raw/source.tif")

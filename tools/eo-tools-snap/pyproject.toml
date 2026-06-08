@@ -11,11 +11,10 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
-    "eo-tools-core>=0.1.0",
-    "eo-catalog-stac>=0.1.0",
+    "eo-io",
+    "eo-raster",
     "eo-store",
-    "aria2p[tui]",
-    "GDAL",
+    "eo-tools-core",
 ]
 
 [project.urls]
@@ -28,5 +27,7 @@ snap = "geosprite.eo.tools.snap"
 packages = ["src/geosprite"]
 
 [tool.uv.sources]
-eo-tools-core = { workspace = true }
+eo-io = { workspace = true }
+eo-raster = { workspace = true }
 eo-store = { workspace = true }
+eo-tools-core = { workspace = true }

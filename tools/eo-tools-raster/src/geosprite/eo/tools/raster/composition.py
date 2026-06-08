@@ -11,15 +11,10 @@ import asyncio
 
 from pydantic import Field
 
+from geosprite.eo.raster.models import RasterOperationIn, RasterOperationOut, RasterOutput
 from geosprite.eo.raster import CompositionMethod, compose_images
 from geosprite.eo.store import localize_url_inputs
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .models import (
-    RasterOperationIn,
-    RasterOperationOut,
-    RasterOutput,
-)
 
 
 class ComposeRasterIn(RasterOperationIn):
@@ -49,7 +44,8 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
         output = RasterOutput.from_context(
-            ctx,
+            ctx.store,
+            ctx.workdir,
             inputs.output_file,
             f"{inputs.method.value}.tif",
             run_id=ctx.run_id,

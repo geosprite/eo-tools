@@ -12,14 +12,9 @@ import asyncio
 from pydantic import Field
 
 from geosprite.eo.raster import stack_images, stack_rgb_images
+from geosprite.eo.raster.models import RasterOperationIn, RasterOperationOut, RasterOutput
 from geosprite.eo.store import localize_url_inputs
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .models import (
-    RasterOperationIn,
-    RasterOperationOut,
-    RasterOutput,
-)
 
 
 class StackRasterIn(RasterOperationIn):
@@ -58,7 +53,8 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
         output = RasterOutput.from_context(
-            ctx,
+            ctx.store,
+            ctx.workdir,
             inputs.output_file,
             "stack.tif",
             run_id=ctx.run_id,
@@ -98,7 +94,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
     InputModel = StackRgbRasterIn
     OutputModel = RasterOperationOut
 
-    @localize_url_inputs()
+    @localize_url_inputs
     async def run(self, ctx: ToolContext, inputs: StackRgbRasterIn) -> RasterOperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
@@ -128,6 +124,7 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
                 output_format=inputs.output_format,
             ),
         )
+
         return output.complete(result_path)
 
 

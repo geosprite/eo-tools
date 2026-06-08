@@ -7,10 +7,9 @@
 
 from __future__ import annotations
 
+from geosprite.eo.raster.models import RasterLocalizationIn, RasterLocalizationOut
 from geosprite.eo.store import localize_url_inputs
 from geosprite.eo.tools import Tool, ToolContext, tool
-
-from .models import RasterLocalizationIn, RasterLocalizationOut
 
 
 @tool
