@@ -8,31 +8,25 @@
 from __future__ import annotations
 
 import asyncio
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, ClassVar
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 from pydantic import Field, model_validator
 
-from geosprite.eo.raster.models import RasterOperationIn, RasterOperationOut, RasterOutput
-from geosprite.eo.store import localize_url_inputs
+from geosprite.eo.store import localize_url_inputs, OperationIn, OperationOut, Output
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 from .core.sentinel1 import preprocess
 
 
-class SNAPSentinel1In(RasterOperationIn):
+class SNAPSentinel1In(OperationIn):
     """Sentinel-1 SNAP preprocessing inputs and output controls."""
 
-    manifest_name: ClassVar[str] = "manifest.safe"
-    polar_names: ClassVar[list[str]] = [
+    files: ClassVar[list[str]] = [
+        "manifest.safe",
         "measurement/iw-vv.tiff",
         "measurement/iw-vh.tiff",
-    ]
-    files: ClassVar[list[str]] = [
-        manifest_name,
-        "preview/quick-look.png",
-        *polar_names,
         "annotation/calibration/noise-iw-vv.xml",
         "annotation/calibration/noise-iw-vh.xml",
         "annotation/calibration/calibration-iw-vv.xml",
@@ -41,18 +35,13 @@ class SNAPSentinel1In(RasterOperationIn):
         "annotation/iw-vh.xml",
     ]
 
+    input_files: list[str] = Field(
+        default_factory=list,
+        min_length=9,
+        description="Sentinel-1 SAFE files derived from manifest_file unless explicitly provided.",
+    )
     manifest_file: str = Field(
         description="Sentinel-1 manifest.safe path or URI passed to SNAP preprocessing.",
-    )
-    polar_files: list[str] = Field(
-        min_length=2,
-        max_length=2,
-        description="Sentinel-1 VV and VH measurement file paths or URIs.",
-    )
-
-    input_dir: str | None = Field(
-        default=None,
-        description="Sentinel-1 SAFE input directory used to derive required SNAP sidecar files.",
     )
 
     @model_validator(mode="before")
@@ -62,124 +51,51 @@ class SNAPSentinel1In(RasterOperationIn):
             return data
 
         values = dict(data)
-        input_dir = data.get("input_dir")
-        if input_dir is not None and not values.get("input_files"):
-            values["input_files"] = [_join_input_file(input_dir, file) for file in cls.files]
-        elif (
-            not values.get("input_files")
-            and values.get("manifest_file")
-            and values.get("polar_files")
-        ):
-            values["input_files"] = [values["manifest_file"], *values["polar_files"]]
 
-        input_files = values.get("input_files") or []
-        if not values.get("manifest_file"):
-            values["manifest_file"] = _preprocess_inputs(input_files)[0]
-        if not values.get("polar_files"):
-            values["polar_files"] = _preprocess_inputs(input_files)[1]
+        manifest_file = values.get("manifest_file")
+        if manifest_file and not values.get("input_files"):
+            manifest_dir = _manifest_base_dir(manifest_file)
+            values["input_files"] = [_join_input_file(manifest_dir, file) for file in cls.files]
 
         return values
 
 
-def _join_input_file(input_dir: str, file: str) -> str:
-    parsed = urlparse(input_dir)
+def _manifest_base_dir(manifest_file: str) -> str:
+    parsed = urlparse(manifest_file)
     if parsed.scheme and len(parsed.scheme) > 1:
-        return f"{input_dir.rstrip('/')}/{file}"
+        parent_path = PurePosixPath(parsed.path).parent.as_posix()
+        if parent_path == ".":
+            parent_path = ""
+        return urlunparse(parsed._replace(path=parent_path, params="", query="", fragment=""))
 
-    return str(Path(input_dir) / file)
-
-
-def _select_input_file(
-    input_files: list[str],
-    file_name: str,
-    fallback_indices: tuple[int, ...],
-) -> str:
-    normalized_name = file_name.replace("\\", "/").lower()
-    for input_file in input_files:
-        normalized_file = str(input_file).replace("\\", "/").lower()
-        if normalized_file.endswith(normalized_name):
-            return str(input_file)
-
-    for fallback_index in fallback_indices:
-        try:
-            return str(input_files[fallback_index])
-        except IndexError:
-            continue
-
-    raise ValueError(f"Sentinel-1 input_files must include {file_name!r}.")
+    return str(Path(manifest_file).parent)
 
 
-def _select_polar_file(
-    input_files: list[str],
-    polarization: str,
-    fallback_indices: tuple[int, ...],
-) -> str:
-    normalized_polarization = polarization.lower()
-    legacy_name = f"measurement/iw-{normalized_polarization}.tiff"
+def _join_input_file(base_dir: str, file: str) -> str:
+    parsed = urlparse(base_dir)
+    if parsed.scheme and len(parsed.scheme) > 1:
+        return f"{base_dir.rstrip('/')}/{file}"
 
-    for input_file in input_files:
-        normalized_file = str(input_file).replace("\\", "/").lower()
-        if not normalized_file.endswith(".tiff"):
-            continue
-        if f"/measurement/" not in normalized_file:
-            continue
-        if normalized_file.endswith(legacy_name) or f"-{normalized_polarization}-" in normalized_file:
-            return str(input_file)
-
-    for fallback_index in fallback_indices:
-        try:
-            return str(input_files[fallback_index])
-        except IndexError:
-            continue
-
-    raise ValueError(f"Sentinel-1 input_files must include a {polarization.upper()} measurement.")
-
-
-def _preprocess_inputs(input_files: list[str]) -> tuple[str, list[str]]:
-    manifest_file = _select_input_file(input_files, SNAPSentinel1In.manifest_name, (0,))
-    polar_files = [
-        _select_polar_file(input_files, polarization, fallback_indices)
-        for fallback_indices, polarization in (
-            ((2, 1), "vv"),
-            ((3, 2), "vh"),
-        )
-    ]
-    return manifest_file, polar_files
-
-
-def _preprocess_polarizations(polar_files: list[str]) -> list[str]:
-    polarizations = []
-    for polar_file in polar_files:
-        normalized_file = str(polar_file).replace("\\", "/").lower()
-        for polarization in ("vv", "vh", "hh", "hv"):
-            if (
-                normalized_file.endswith(f"iw-{polarization}.tiff")
-                or f"-{polarization}-" in normalized_file
-            ):
-                polarizations.append(polarization.upper())
-                break
-        else:
-            raise ValueError(f"Cannot determine Sentinel-1 polarization from {polar_file!r}.")
-    return polarizations
+    return str(Path(base_dir) / file)
 
 
 @tool
-class SNAPSentinel1Tool(Tool[SNAPSentinel1In, RasterOperationOut]):
+class SNAPSentinel1Tool(Tool[SNAPSentinel1In, OperationOut]):
     name = "sentinel1"
     domain = "snap"
     summary = "Preprocess Sentinel-1 GRD with ESA SNAP."
     description = (
-        "Run Sentinel-1 SNAP preprocessing from a SAFE directory or explicit SAFE sidecar files."
+        "Run Sentinel-1 SNAP preprocessing from a Sentinel-1 manifest.safe path or URI."
     )
     InputModel = SNAPSentinel1In
-    OutputModel = RasterOperationOut
+    OutputModel = OperationOut
 
     @localize_url_inputs
-    async def run(self, ctx: ToolContext, inputs: SNAPSentinel1In) -> RasterOperationOut:
+    async def run(self, ctx: ToolContext, inputs: SNAPSentinel1In) -> OperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
-        output = RasterOutput.from_context(
+        output = Output.from_context(
             ctx.store,
             ctx.workdir,
             inputs.output_file,
@@ -199,19 +115,14 @@ class SNAPSentinel1Tool(Tool[SNAPSentinel1In, RasterOperationOut]):
 
         result_path = await loop.run_in_executor(
             None,
-            lambda: _run_preprocess(inputs.input_files, ctx.workdir),
+            lambda: preprocess(
+                inputs.manifest_file,
+                ["VV", "VH"],
+                str(output.local_path.parent),
+            ),
         )
 
         return output.complete(result_path)
-
-
-def _run_preprocess(input_files: list[str], workdir: Path):
-    manifest_file, polar_files = _preprocess_inputs(input_files)
-    return preprocess(
-        manifest_file,
-        _preprocess_polarizations(polar_files),
-        workdir,
-    )
 
 
 __all__ = [

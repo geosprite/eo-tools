@@ -13,12 +13,11 @@ import numpy as np
 from osgeo import gdal, osr
 from pydantic import ValidationError
 
-from geosprite.eo.store import Checksum
+from geosprite.eo.store import Checksum, LocalizationIn, Output
 from geosprite.eo.tools import build_registry_from_package
 from geosprite.eo.tools.raster.composition import ComposeRasterIn, ComposeRasterTool
 from geosprite.eo.tools.raster.fetch import FetchRasterIn, FetchRasterTool
 from geosprite.eo.tools.raster.localization import LocalizeRasterTool
-from geosprite.eo.tools.raster.models import RasterLocalizationIn, RasterOutput
 from geosprite.eo.tools.raster.stack import (
     StackRasterIn,
     StackRasterTool,
@@ -309,7 +308,7 @@ class RasterToolTests(unittest.TestCase):
             self.assertTrue(put_path.is_file())
             self.assertEqual(
                 put_path,
-                root / "work" / "raster" / "test-run" / "products" / "stack.tif",
+                root / "work" / "test-run" / "products" / "stack.tif",
             )
 
     def test_raster_output_omits_absent_run_id_from_remote_stage_path(self):
@@ -318,8 +317,9 @@ class RasterToolTests(unittest.TestCase):
 
             for run_id in (None, "", " ", "none", "None"):
                 with self.subTest(run_id=run_id):
-                    output = RasterOutput.from_context(
-                        _Context(store=_Store(), workdir=root / "work", run_id=run_id),
+                    output = Output.from_context(
+                        _Store(),
+                        root / "work",
                         "s3://products/stack.tif",
                         "stack.tif",
                         run_id=run_id,
@@ -327,7 +327,7 @@ class RasterToolTests(unittest.TestCase):
 
                     self.assertEqual(
                         output.local_path,
-                        root / "work" / "raster" / "products" / "stack.tif",
+                        root / "work" / "products" / "stack.tif",
                     )
 
     def test_stack_tool_normalizes_directory_s3_output(self):
@@ -359,7 +359,6 @@ class RasterToolTests(unittest.TestCase):
                 put_path,
                 root
                 / "work"
-                / "raster"
                 / "test-run"
                 / "products"
                 / "outputs"
@@ -414,7 +413,7 @@ class RasterToolTests(unittest.TestCase):
             source = root / "source.tif"
             _write_tiff(source, 1)
 
-            with self.assertRaisesRegex(ValueError, "ToolContext.store"):
+            with self.assertRaisesRegex(ValueError, "requires a store"):
                 asyncio.run(
                     StackRasterTool().run(
                         _Context(store=None, workdir=root),
@@ -545,7 +544,6 @@ class RasterToolTests(unittest.TestCase):
                 put_path,
                 root
                 / "work"
-                / "raster"
                 / "test-run"
                 / "geosprite"
                 / "eo"
@@ -668,7 +666,7 @@ class RasterToolTests(unittest.TestCase):
                 )
             )
 
-            expected_local = root / "work" / "raster" / "test-run" / "products" / "raw" / "source.tif"
+            expected_local = root / "work" / "test-run" / "products" / "raw" / "source.tif"
             self.assertEqual(Path(result.local_path), expected_local)
             self.assertEqual(result.destination_uri, destination)
             self.assertEqual(result.presigned_url, "https://signed.example.test/products/raw/source.tif")
@@ -725,7 +723,7 @@ class RasterToolTests(unittest.TestCase):
 
     def test_fetch_tool_requires_store(self):
         with tempfile.TemporaryDirectory() as temp_dir:
-            with self.assertRaisesRegex(ValueError, "ToolContext.store"):
+            with self.assertRaisesRegex(ValueError, "requires a store"):
                 asyncio.run(
                     FetchRasterTool().run(
                         _Context(store=None, workdir=Path(temp_dir)),
@@ -754,7 +752,7 @@ class RasterToolTests(unittest.TestCase):
             result = asyncio.run(
                 LocalizeRasterTool().run(
                     _Context(store=store, workdir=root / "work"),
-                    RasterLocalizationIn(input_files=[left_uri, right_uri]),
+                    LocalizationIn(input_files=[left_uri, right_uri]),
                 )
             )
 
@@ -779,7 +777,7 @@ class RasterToolTests(unittest.TestCase):
             result = asyncio.run(
                 LocalizeRasterTool().run(
                     _Context(store=store, workdir=root / "work"),
-                    RasterLocalizationIn(
+                    LocalizationIn(
                         input_files=[source_uri],
                         bucket="geosprite",
                         prefix="localized",

@@ -12,16 +12,15 @@ import asyncio
 from pydantic import Field
 
 from geosprite.eo.raster import stack_images, stack_rgb_images
-from geosprite.eo.raster.models import RasterOperationIn, RasterOperationOut, RasterOutput
-from geosprite.eo.store import localize_url_inputs
+from geosprite.eo.store import localize_url_inputs, OperationIn, OperationOut, Output
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 
-class StackRasterIn(RasterOperationIn):
+class StackRasterIn(OperationIn):
     """Raster stack inputs and output controls."""
 
 
-class StackRgbRasterIn(RasterOperationIn):
+class StackRgbRasterIn(OperationIn):
     """RGB raster stack inputs and output controls."""
 
     output_format: str = Field(
@@ -36,7 +35,7 @@ class StackRgbRasterIn(RasterOperationIn):
 
 
 @tool
-class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
+class StackRasterTool(Tool[StackRasterIn, OperationOut]):
     name = "stack"
     domain = "raster"
     summary = "Stack single-band rasters into a multiband raster."
@@ -45,14 +44,14 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
         "and stack them into one local output."
     )
     InputModel = StackRasterIn
-    OutputModel = RasterOperationOut
+    OutputModel = OperationOut
 
     @localize_url_inputs
-    async def run(self, ctx: ToolContext, inputs: StackRasterIn) -> RasterOperationOut:
+    async def run(self, ctx: ToolContext, inputs: StackRasterIn) -> OperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
-        output = RasterOutput.from_context(
+        output = Output.from_context(
             ctx.store,
             ctx.workdir,
             inputs.output_file,
@@ -83,7 +82,7 @@ class StackRasterTool(Tool[StackRasterIn, RasterOperationOut]):
 
 
 @tool
-class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
+class StackRgbRasterTool(Tool[StackRgbRasterIn, OperationOut]):
     name = "stack_rgb"
     domain = "raster"
     summary = "Stack three single-band rasters into an 8-bit RGB raster."
@@ -92,15 +91,16 @@ class StackRgbRasterTool(Tool[StackRgbRasterIn, RasterOperationOut]):
         "stretch them to 8-bit, and write one local RGB output."
     )
     InputModel = StackRgbRasterIn
-    OutputModel = RasterOperationOut
+    OutputModel = OperationOut
 
     @localize_url_inputs
-    async def run(self, ctx: ToolContext, inputs: StackRgbRasterIn) -> RasterOperationOut:
+    async def run(self, ctx: ToolContext, inputs: StackRgbRasterIn) -> OperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
-        output = RasterOutput.from_context(
-            ctx,
+        output = Output.from_context(
+            ctx.store,
+            ctx.workdir,
             inputs.output_file,
             "rgb.tif",
             run_id=ctx.run_id,

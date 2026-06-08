@@ -11,13 +11,12 @@ import asyncio
 
 from pydantic import Field
 
-from geosprite.eo.raster.models import RasterOperationIn, RasterOperationOut, RasterOutput
 from geosprite.eo.raster import CompositionMethod, compose_images
-from geosprite.eo.store import localize_url_inputs
+from geosprite.eo.store import localize_url_inputs, OperationIn, OperationOut, Output
 from geosprite.eo.tools import Tool, ToolContext, tool
 
 
-class ComposeRasterIn(RasterOperationIn):
+class ComposeRasterIn(OperationIn):
     """Raster composition inputs and output controls."""
 
     method: CompositionMethod = Field(
@@ -27,7 +26,7 @@ class ComposeRasterIn(RasterOperationIn):
 
 
 @tool
-class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
+class ComposeRasterTool(Tool[ComposeRasterIn, OperationOut]):
     name = "compose"
     domain = "raster"
     summary = "Compose aligned single-band rasters by max, min, or median."
@@ -36,14 +35,14 @@ class ComposeRasterTool(Tool[ComposeRasterIn, RasterOperationOut]):
         "and compose valid pixels into one local output."
     )
     InputModel = ComposeRasterIn
-    OutputModel = RasterOperationOut
+    OutputModel = OperationOut
 
     @localize_url_inputs
-    async def run(self, ctx: ToolContext, inputs: ComposeRasterIn) -> RasterOperationOut:
+    async def run(self, ctx: ToolContext, inputs: ComposeRasterIn) -> OperationOut:
         if inputs.publish_catalog:
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
-        output = RasterOutput.from_context(
+        output = Output.from_context(
             ctx.store,
             ctx.workdir,
             inputs.output_file,

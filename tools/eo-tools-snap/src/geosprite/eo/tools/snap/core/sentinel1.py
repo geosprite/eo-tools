@@ -9,7 +9,7 @@ Requires ESA SNAP with snappy Python bindings
 """
 
 import os
-from typing import List, Optional
+from typing import List
 
 try:
     import numpy as np
@@ -94,7 +94,7 @@ def preprocess(
 
         output_files.append(output_filename)
 
-    return output_filename
+    return output_files
 
 
 # def _remove_outer_border(tif_path, nodata_val=-32768):
