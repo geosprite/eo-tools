@@ -360,6 +360,12 @@ The raster deployment starts an `aria2` sidecar in the same Pod for the
 `ARIA2_RPC_SECRET`, and use the shared `/work/aria2` volume for resumable HTTP
 downloads.
 
+Presigned S3 URLs must use an address reachable by clients outside the cluster.
+Keep `s3.endpoint_url` pointed at the in-cluster MinIO service for Pod-to-MinIO
+traffic, and set `s3.public_endpoint_url` to the externally reachable MinIO API
+endpoint, for example `http://10.168.162.111:30900` when the MinIO service is
+exposed through NodePort `30900`.
+
 If the registry requires authentication for pulls, create an image pull secret
 before or after applying the manifest:
 

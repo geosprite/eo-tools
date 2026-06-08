@@ -18,9 +18,10 @@ stringData:
       "backends": {
         "s3": {
           "endpoint_url": "http://minio.eo-infra.svc.cluster.local:9000",
+          "public_endpoint_url": "http://10.168.162.111:30900",
           "region_name": "us-east-1",
-          "aws_access_key_id": "minioadmin",
-          "aws_secret_access_key": "minioadmin",
+          "aws_access_key_id": "geosprite",
+          "aws_secret_access_key": "geospriteo",
           "addressing_style": "path",
           "verify_tls": false,
           "max_concurrency": 4,

@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1.7
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+ARG SNAP_INSTALLER=esa-snap_sentinel_linux-13.0.0.sh
 ARG SNAP_INSTALLER_URL=https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_linux-13.0.0.sh
 
 ENV SNAP_HOME=/opt/snap \
@@ -55,7 +57,14 @@ RUN uv pip install --no-config --no-sources --no-cache \
 RUN uv pip install --no-config --no-sources --no-cache --no-deps \
         ./eo-tools/tools/eo-tools-snap
 
-RUN wget -q -O /tmp/esa-snap.sh "$SNAP_INSTALLER_URL" \
+RUN --mount=type=bind,source=eo-tools/tools/eo-tools-snap/deploy/docker,target=/snap-docker-assets,ro \
+    if [ -f "/snap-docker-assets/$SNAP_INSTALLER" ]; then \
+        echo "Using local SNAP installer: $SNAP_INSTALLER"; \
+        cp "/snap-docker-assets/$SNAP_INSTALLER" /tmp/esa-snap.sh; \
+    else \
+        echo "Downloading SNAP installer: $SNAP_INSTALLER_URL"; \
+        wget -q -O /tmp/esa-snap.sh "$SNAP_INSTALLER_URL"; \
+    fi \
     && bash /tmp/esa-snap.sh -q -dir "$SNAP_HOME" \
     && rm /tmp/esa-snap.sh \
     && uv pip install --no-config --no-cache esa-snappy \
