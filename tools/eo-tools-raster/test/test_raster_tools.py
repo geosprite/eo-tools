@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import logging
 import shutil
 import tempfile
@@ -12,8 +13,12 @@ import numpy as np
 from osgeo import gdal, osr
 from pydantic import ValidationError
 
+from geosprite.eo.store import Checksum
 from geosprite.eo.tools import build_registry_from_package
 from geosprite.eo.tools.raster.composition import ComposeRasterIn, ComposeRasterTool
+from geosprite.eo.tools.raster.fetch import FetchRasterIn, FetchRasterTool
+from geosprite.eo.tools.raster.localization import LocalizeRasterTool
+from geosprite.eo.tools.raster.models import RasterLocalizationIn
 from geosprite.eo.tools.raster.stack import (
     StackRasterIn,
     StackRasterTool,
@@ -50,6 +55,11 @@ class _Context:
 @dataclass
 class _FetchResult:
     local_path: Path
+    source_uri: str
+    resolved_uri: str
+    backend: str
+    size: int
+    checksum: Checksum
 
 
 @dataclass
@@ -79,7 +89,15 @@ class _Store:
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(self.sources[source_uri], destination)
         self.fetches.append((source_uri, destination))
-        return _FetchResult(destination)
+        payload = destination.read_bytes()
+        return _FetchResult(
+            local_path=destination,
+            source_uri=source_uri,
+            resolved_uri=source_uri,
+            backend="test-store",
+            size=len(payload),
+            checksum=Checksum(value=hashlib.sha256(payload).hexdigest()),
+        )
 
     def exists(self, source_uri: str) -> bool:
         return source_uri in self.existing
@@ -586,12 +604,189 @@ class RasterToolTests(unittest.TestCase):
                 write_back=True,
             )
 
-    def test_package_discovery_registers_stack_and_compose(self):
+    def test_fetch_tool_downloads_source_to_local_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source.tif"
+            output = root / "work" / "downloads" / "source.tif"
+            _write_tiff(source, 3)
+            source_uri = "https://example.test/assets/source.tif"
+            store = _Store({source_uri: source})
+
+            result = asyncio.run(
+                FetchRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    FetchRasterIn(
+                        source_uri=source_uri,
+                        output_file="downloads/source.tif",
+                    ),
+                )
+            )
+
+            self.assertEqual(Path(result.local_path), output)
+            self.assertTrue(output.is_file())
+            self.assertEqual(result.destination_uri, None)
+            self.assertEqual(result.presigned_url, None)
+            self.assertEqual(result.write_back, True)
+            self.assertEqual(store.fetches, [(source_uri, output)])
+            self.assertEqual(store.puts, [])
+
+    def test_fetch_tool_uploads_to_s3_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source.tif"
+            _write_tiff(source, 4)
+            source_uri = "https://example.test/assets/source.tif"
+            destination = "s3://products/raw/source.tif"
+            store = _Store({source_uri: source})
+
+            result = asyncio.run(
+                FetchRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    FetchRasterIn(
+                        source_uri=source_uri,
+                        output_file=destination,
+                        presign_url=True,
+                        presign_expires_in=600,
+                    ),
+                )
+            )
+
+            expected_local = root / "work" / "raster" / "test-run" / "fetch" / "products" / "raw" / "source.tif"
+            self.assertEqual(Path(result.local_path), expected_local)
+            self.assertEqual(result.destination_uri, destination)
+            self.assertEqual(result.presigned_url, "https://signed.example.test/products/raw/source.tif")
+            self.assertEqual(result.write_back, True)
+            self.assertEqual(store.fetches, [(source_uri, expected_local)])
+            self.assertEqual(store.puts, [(expected_local, destination, False)])
+            self.assertEqual(store.presigns, [(destination, 600)])
+
+    def test_fetch_tool_accepts_s3_output_file_as_destination(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = root / "source.tif"
+            _write_tiff(source, 5)
+            source_uri = "https://example.test/assets/source.tif"
+            destination = "s3://products/raw/"
+            store = _Store({source_uri: source})
+
+            result = asyncio.run(
+                FetchRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    FetchRasterIn(
+                        source_uri=source_uri,
+                        output_file=destination,
+                    ),
+                )
+            )
+
+            expected_destination = "s3://products/raw/source.tif"
+            self.assertEqual(result.destination_uri, expected_destination)
+            self.assertEqual(store.puts[0][1], expected_destination)
+
+    def test_fetch_tool_skips_existing_s3_destination_without_local_output(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source_uri = "https://example.test/assets/source.tif"
+            destination = "s3://products/raw/source.tif"
+            store = _Store(existing={destination})
+
+            result = asyncio.run(
+                FetchRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    FetchRasterIn(
+                        source_uri=source_uri,
+                        output_file=destination,
+                    ),
+                )
+            )
+
+            self.assertEqual(result.local_path, None)
+            self.assertEqual(result.destination_uri, destination)
+            self.assertEqual(result.write_back, False)
+            self.assertEqual(store.fetches, [])
+            self.assertEqual(store.puts, [])
+
+    def test_fetch_tool_requires_store(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaisesRegex(ValueError, "ToolContext.store"):
+                asyncio.run(
+                    FetchRasterTool().run(
+                        _Context(store=None, workdir=Path(temp_dir)),
+                        FetchRasterIn(source_uri="https://example.test/assets/source.tif"),
+                    )
+                )
+
+    def test_fetch_tool_rejects_legacy_destination_uri(self):
+        with self.assertRaises(ValidationError):
+            FetchRasterIn(
+                source_uri="https://example.test/assets/source.tif",
+                destination_uri="file:///tmp/source.tif",
+            )
+
+    def test_localization_tool_localizes_multiple_uri_inputs(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            left = root / "left.tif"
+            right = root / "right.tif"
+            _write_tiff(left, 1)
+            _write_tiff(right, 2)
+            left_uri = "https://example.test/assets/left.tif"
+            right_uri = "https://example.test/assets/right.tif"
+            store = _Store({left_uri: left, right_uri: right})
+
+            result = asyncio.run(
+                LocalizeRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    RasterLocalizationIn(input_files=[left_uri, right_uri]),
+                )
+            )
+
+            self.assertEqual([item[0] for item in store.fetches], [left_uri, right_uri])
+            self.assertEqual(result.input_files, [str(path) for _, path in store.fetches])
+            self.assertTrue(
+                all((root / "work") in Path(path).parents for path in result.input_files)
+            )
+            self.assertEqual(
+                [Path(path).parts[-2:] for path in result.input_files],
+                [("assets", "left.tif"), ("assets", "right.tif")],
+            )
+            self.assertEqual(result.publish_catalog, False)
+
+    def test_localization_tool_reuses_existing_localized_s3_uri(self):
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source_uri = "https://example.test/assets/source.tif"
+            localized_uri = "s3://geosprite/localized/https-example.test/assets/source.tif"
+            store = _Store(existing={localized_uri})
+
+            result = asyncio.run(
+                LocalizeRasterTool().run(
+                    _Context(store=store, workdir=root / "work"),
+                    RasterLocalizationIn(
+                        input_files=[source_uri],
+                        bucket="geosprite",
+                        prefix="localized",
+                    ),
+                )
+            )
+
+            self.assertEqual(result.input_files, [localized_uri])
+            self.assertEqual(store.fetches, [])
+            self.assertEqual(store.puts, [])
+
+    def test_package_discovery_registers_raster_tools(self):
         registry = build_registry_from_package("geosprite.eo.tools.raster")
 
         self.assertEqual(
             {tool.fully_qualified_name() for tool in registry},
-            {"raster.compose", "raster.stack", "raster.stack_rgb"},
+            {
+                "raster.compose",
+                "raster.fetch",
+                "raster.localization",
+                "raster.stack",
+                "raster.stack_rgb",
+            },
         )
 
 

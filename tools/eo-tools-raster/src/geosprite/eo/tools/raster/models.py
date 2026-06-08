@@ -17,8 +17,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from geosprite.eo.tools import ToolContext
 
 
-class RasterOperationIn(BaseModel):
-    """Shared local IO controls for raster tools."""
+class RasterLocalizationIn(BaseModel):
+    """Shared input localization controls for raster tools."""
 
     model_config = ConfigDict(extra="forbid")
 
@@ -38,6 +38,15 @@ class RasterOperationIn(BaseModel):
         default=None,
         description="S3 object key prefix used with bucket during input localization.",
     )
+    publish_catalog: bool = Field(
+        default=False,
+        description="Explicit future Catalog publication control. Raster tools currently reject true.",
+    )
+
+
+class RasterOperationIn(RasterLocalizationIn):
+    """Shared local IO controls for raster tools."""
+
     output_file: str | None = Field(
         default=None,
         description=(
@@ -55,10 +64,6 @@ class RasterOperationIn(BaseModel):
     overwrite: bool = Field(
         default=False,
         description="Whether to regenerate and replace an existing local output.",
-    )
-    publish_catalog: bool = Field(
-        default=False,
-        description="Explicit future Catalog publication control. Raster tools currently reject true.",
     )
     presign_url: bool = Field(
         default=False,
@@ -96,6 +101,16 @@ class RasterOperationOut(BaseModel):
     publish_catalog: bool = Field(description="Whether Catalog publication ran.")
 
 
+class RasterLocalizationOut(BaseModel):
+    """Localized raster inputs ready to pass to downstream raster tools."""
+
+    input_files: list[str] = Field(
+        min_length=1,
+        description="Localized raster paths or URIs returned by eo-store localization.",
+    )
+    publish_catalog: bool = Field(description="Whether Catalog publication ran.")
+
+
 @dataclass(frozen=True)
 class RasterOutput:
     """Resolved output target plus Store write/presign policy."""
@@ -119,6 +134,7 @@ class RasterOutput:
         fallback: str,
         *,
         run_id: str | None = None,
+        stage_dir: str = "outputs",
         overwrite: bool = False,
         presign_url: bool = False,
         presign_expires_in: int = 3600,
@@ -153,7 +169,7 @@ class RasterOutput:
             key_parts = _s3_key_parts(parsed.path)
             run_part = run_id or uuid4().hex
 
-            local_path = ctx.workdir / "raster" / run_part / "outputs" / parsed.netloc
+            local_path = ctx.workdir / run_part / stage_dir / parsed.netloc
 
             for key_part in key_parts:
                 local_path /= key_part
@@ -245,6 +261,8 @@ def _is_s3_output(output_file: str | None) -> bool:
 
 
 __all__ = [
+    "RasterLocalizationIn",
+    "RasterLocalizationOut",
     "RasterOperationIn",
     "RasterOperationOut",
     "RasterOutput",
