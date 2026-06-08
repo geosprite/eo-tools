@@ -1,0 +1,20 @@
+{
+  "backends": {
+    "aria2_http": {
+      "workspace": "/work/aria2",
+      "host": "http://aria2",
+      "port": 6800,
+      "secret": "eo-aria2-secret",
+      "rpc_timeout_seconds": 60,
+      "transfer_timeout_seconds": 7200,
+      "poll_interval_seconds": 0.5,
+      "split": 8,
+      "max_connection_per_server": 8,
+      "min_split_size": "1M"
+    }
+  },
+  "localization": {
+    "input_parameter": "input_files",
+    "preserve_path_structure": true
+  }
+}

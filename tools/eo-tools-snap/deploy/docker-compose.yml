@@ -1,0 +1,38 @@
+services:
+  snap:
+    image: ${EO_TOOLS_SNAP_IMAGE:-eo-tools-snap:0.1.0}
+    build:
+      context: ../../../..
+      dockerfile: eo-tools/tools/eo-tools-snap/deploy/docker/Dockerfile
+    depends_on:
+      - aria2
+    ports:
+      - "${EO_TOOLS_SNAP_PORT:-8000}:8000"
+    volumes:
+      - snap-work:/work
+      - ./store.snap.local.json:/etc/eo-tools/store/store.json:ro
+
+  aria2:
+    image: ${EO_TOOLS_SNAP_IMAGE:-eo-tools-snap:0.1.0}
+    command:
+      - sh
+      - -c
+      - >
+        aria2c
+        --enable-rpc=true
+        --rpc-listen-all=true
+        --rpc-listen-port=6800
+        --rpc-secret="$${ARIA2_RPC_SECRET}"
+        --dir=/work/aria2
+        --continue=true
+        --max-concurrent-downloads=4
+        --max-connection-per-server=8
+        --split=8
+        --min-split-size=1M
+    environment:
+      ARIA2_RPC_SECRET: ${ARIA2_RPC_SECRET:-eo-aria2-secret}
+    volumes:
+      - snap-work:/work
+
+volumes:
+  snap-work:

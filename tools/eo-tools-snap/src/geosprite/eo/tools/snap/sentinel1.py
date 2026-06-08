@@ -119,11 +119,14 @@ class SNAPSentinel1Tool(Tool[SNAPSentinel1In, SNAPSentinel1Out]):
             raise NotImplementedError("Catalog publication is deferred for raster tools.")
 
         polarizations = ["VV", "VH"]
+        fallbacks = [
+            f"iw-{polarization.lower()}.tif" for polarization in polarizations
+        ]
         output = Output.from_context(
             ctx.store,
             ctx.workdir,
             None,
-            None,
+            fallbacks,
             output_dir=inputs.output_dir,
             run_id=ctx.run_id,
             overwrite=inputs.overwrite,
@@ -143,7 +146,7 @@ class SNAPSentinel1Tool(Tool[SNAPSentinel1In, SNAPSentinel1Out]):
             lambda: preprocess(
                 inputs.input_files[0],
                 polarizations,
-                str(output.local_path.parent),
+                inputs.output_dir,
             ),
         )
 

@@ -32,7 +32,7 @@ def output_files(
     os.makedirs(resolved_dir, exist_ok=True)
 
     return [
-        os.path.join(resolved_dir, prefix + pol + ".tif")
+        os.path.join(resolved_dir, prefix + pol.lower() + ".tif")
         for pol in polar_list
     ]
 
