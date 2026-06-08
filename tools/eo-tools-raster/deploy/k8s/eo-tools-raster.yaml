@@ -15,24 +15,36 @@ type: Opaque
 stringData:
   store.json: |
     {
-      "s3": {
-        "endpoint_url": "http://minio.eo-infra.svc.cluster.local:9000",
-        "region_name": "us-east-1",
-        "aws_access_key_id": "geosprite",
-        "aws_secret_access_key": "geospriteo",
-        "addressing_style": "path",
-        "verify_tls": false,
-        "max_concurrency": 4,
-        "create_bucket_if_missing": true
+      "backends": {
+        "s3": {
+          "endpoint_url": "http://minio.eo-infra.svc.cluster.local:9000",
+          "region_name": "us-east-1",
+          "aws_access_key_id": "minioadmin",
+          "aws_secret_access_key": "minioadmin",
+          "addressing_style": "path",
+          "verify_tls": false,
+          "max_concurrency": 4,
+          "create_bucket_if_missing": true
+        },
+        "aria2_http": {
+          "workspace": "/work/aria2",
+          "host": "http://127.0.0.1",
+          "port": 6800,
+          "secret": "eo-aria2-secret",
+          "rpc_timeout_seconds": 60,
+          "transfer_timeout_seconds": 3600,
+          "poll_interval_seconds": 0.5,
+          "split": 8,
+          "max_connection_per_server": 8,
+          "min_split_size": "1M"
+        }
       },
-      "aria2_http": {
-        "workspace": "/work/aria2",
-        "host": "http://127.0.0.1",
-        "port": 6800,
-        "secret": "eo-aria2-secret",
-        "rpc_timeout_seconds": 60,
-        "transfer_timeout_seconds": 3600,
-        "poll_interval_seconds": 0.5
+      "localization": {
+        "input_parameter": "input_files",
+        "preserve_path_structure": true,
+        "bucket": "geosprite",
+        "prefix": "",
+        "temp_dir_prefix": null
       }
     }
 ---
@@ -59,6 +71,9 @@ spec:
         app.kubernetes.io/component: rest
         app.kubernetes.io/part-of: eo-tools
     spec:
+      securityContext:
+        fsGroup: 10001
+        fsGroupChangePolicy: OnRootMismatch
       containers:
         - name: rest
           image: eo-tools-raster:0.1.0
@@ -132,7 +147,7 @@ spec:
             - >
               aria2c
               --enable-rpc=true
-              --rpc-listen-all=true
+              --rpc-listen-all=false
               --rpc-listen-port=6800
               --rpc-secret="${ARIA2_RPC_SECRET}"
               --dir=/work/aria2

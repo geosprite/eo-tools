@@ -19,8 +19,8 @@ stringData:
         "s3": {
           "endpoint_url": "http://minio.eo-infra.svc.cluster.local:9000",
           "region_name": "us-east-1",
-          "aws_access_key_id": "geosprite",
-          "aws_secret_access_key": "geospriteo",
+          "aws_access_key_id": "minioadmin",
+          "aws_secret_access_key": "minioadmin",
           "addressing_style": "path",
           "verify_tls": false,
           "max_concurrency": 4,
@@ -43,7 +43,7 @@ stringData:
         "input_parameter": "input_files",
         "preserve_path_structure": true,
         "bucket": "geosprite",
-        "prefix": "eo-store/localized",
+        "prefix": "",
         "temp_dir_prefix": null
       }
     }

@@ -23,13 +23,14 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 RUN uv pip install --no-config --no-sources --no-cache \
     "numpy<2" \
-    ./eo-io \
-    ./eo-raster \
-    ./eo-store \
+    shapely \
+    "./eo-store[s3,aria2]" \
     ./eo-tools/core \
     "./eo-tools/runtime[all]"
 
 RUN uv pip install --no-config --no-sources --no-cache --no-deps \
+    ./eo-io \
+    ./eo-raster \
     ./eo-tools/tools/eo-tools-raster
 
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
@@ -47,7 +48,7 @@ RUN apt-get update \
         python3-gdal \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --system --uid 10001 --create-home eo \
-    && mkdir -p /work \
+    && mkdir -p /work/runtime /work/aria2 \
     && chown -R eo:eo /work
 
 COPY --from=builder /opt/venv /opt/venv

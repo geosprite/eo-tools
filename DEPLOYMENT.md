@@ -354,6 +354,12 @@ sudo k3s kubectl -n eo-tools edit secret eo-tools-raster-store-config
 sudo k3s kubectl -n eo-tools rollout restart deploy/eo-tools-raster-rest
 ```
 
+The raster deployment starts an `aria2` sidecar in the same Pod for the
+`eo-store` `aria2_http` backend. Keep `aria2_http.host` pointed at
+`http://127.0.0.1`, keep `aria2_http.secret` aligned with the sidecar
+`ARIA2_RPC_SECRET`, and use the shared `/work/aria2` volume for resumable HTTP
+downloads.
+
 If the registry requires authentication for pulls, create an image pull secret
 before or after applying the manifest:
 
