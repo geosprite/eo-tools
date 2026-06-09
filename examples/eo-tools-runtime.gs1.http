@@ -1,0 +1,289 @@
+# Start the runtime service, for example:
+# eo-tools serve-rest --tool-package geosprite.eo.tools.catalog --tool-package geosprite.eo.tools.raster --tool-package geosprite.eo.tools.snap --workdir ./work --store-config ../eo-infra/store/local/store.minio.example.json --port 8000
+#
+# eo-tools-runtime exposes registered tools as:
+# POST /{tool.domain with dots as slashes}/{tool.name with dots as slashes}
+# Legacy query/path parameters from the Postman collection are passed as JSON bodies.
+
+@baseUrl = http://10.168.162.111/eo-tools
+@runId = none
+
+### Health
+GET {{baseUrl}}/health
+
+### List registered tools
+GET {{baseUrl}}/
+
+### Catalog GRS - systems
+POST {{baseUrl}}/catalog/grs/systems
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{}
+
+### Catalog - asset names
+POST {{baseUrl}}/catalog/meta/assets
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "collection": "landsat-c2-l2",
+  "provider": "element84"
+}
+
+### Catalog - search MSI, Postman "Search MSI"
+POST {{baseUrl}}/catalog/search/msi
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "collection": "sentinel-2-l2a",
+  "provider": "aws",
+  "tile": "44SLD",
+  "assets": ["red", "nir"],
+  "datetime": "2023-09-01T00:00:00Z/2023-10-31T23:59:59Z",
+  "cloud_cover": "10",
+  "nodata_percent": "10",
+  "limit": 10
+}
+
+### Catalog - search MSI, Postman "Search MSI-t1"
+POST {{baseUrl}}/catalog/search/msi
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "collection": "sentinel-2-l2a",
+  "provider": "aws",
+  "tile": "49QHG",
+  "assets": ["visual"],
+  "datetime": "2025-01-01T00:00:00Z/2025-12-31T23:59:59Z",
+  "cloud_cover": "20",
+  "nodata_percent": "10",
+  "limit": 10
+}
+
+### Catalog - search SAR
+# The Postman body used provider=planetarycomputer. The current built-in
+# Sentinel-1 adapter is registered under element84, so this request uses element84.
+POST {{baseUrl}}/catalog/search/sar
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "collection": "sentinel-1-grd",
+  "provider": "element84",
+  "datetime": "2021-08-20T00:00:00Z/2021-08-25T23:59:59Z",
+  "assets": ["vv", "vh"],
+  "orbit_state": "descending",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [92, 36.5],
+        [94.2, 36.5],
+        [94.2, 38],
+        [92, 38],
+        [92, 36.5]
+      ]
+    ]
+  },
+  "tile": "44SLD",
+  "limit": 10
+}
+
+### Catalog - search match
+POST {{baseUrl}}/catalog/match
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "collections": ["sentinel-2-l2a", "sentinel-1-grd", "landsat-c2-l2"],
+  "provider": "element84",
+  "datetime": "2023-07-01/2023-07-31",
+  "bbox": "10.0,47.5,11.0,48.5",
+  "assets": {
+    "sentinel-2-l2a": ["red", "nir", "swir1"],
+    "sentinel-1-grd": ["vv", "vh"],
+    "landsat-c2-l2": ["red", "nir08", "swir16"]
+  },
+  "cloud_cover": "30",
+  "max_interval_days": 5.0,
+  "min_overlap_ratio": 0.05,
+  "include_collections": false,
+  "anchor_collection": "sentinel-2-l2a"
+}
+
+### Catalog GRS - MGRS tiles
+# The Postman collection contains a very large GeoJSON body for this request.
+# This keeps the same test area pattern with a compact polygon so it is runnable
+# directly from this file. To replay the full Postman geometry, put that geometry
+# string in the geojson field below.
+POST {{baseUrl}}/catalog/grs/tiles
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "system": "mgrs",
+  "geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[92,36.5],[94.2,36.5],[94.2,38],[92,38],[92,36.5]]]}"
+}
+
+### Catalog GRS - WGRS tiles
+POST {{baseUrl}}/catalog/grs/tiles
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "system": "wgrs",
+  "geojson": "{\"type\":\"Polygon\",\"coordinates\":[[[92,36.5],[94.2,36.5],[94.2,38],[92,38],[92,36.5]]]}"
+}
+
+### Catalog GRS - MGRS bounds
+POST {{baseUrl}}/catalog/grs/bounds
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "system": "mgrs",
+  "tiles": ["41RKN", "41RKP"]
+}
+
+### Catalog - publish collection
+POST {{baseUrl}}/catalog/publish/collection
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "stac_url": "http://127.0.0.1:8080",
+  "collection_id": "eo-tools-runtime-example",
+  "description": "Example collection published by eo-tools-runtime.",
+  "title": "EO Tools Runtime Example",
+  "license": "proprietary",
+  "spatial_bbox": [92.0, 36.5, 94.2, 38.0],
+  "temporal_interval": ["2025-01-01T00:00:00Z", null],
+  "keywords": ["eo-tools", "runtime"],
+  "upsert": true
+}
+
+### Catalog - publish item
+POST {{baseUrl}}/catalog/publish/item
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "stac_url": "http://127.0.0.1:8080",
+  "collection": "eo-tools-runtime-example",
+  "item_id": "example-item-001",
+  "datetime": "2025-01-01T00:00:00Z",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [92.0, 36.5],
+        [94.2, 36.5],
+        [94.2, 38.0],
+        [92.0, 38.0],
+        [92.0, 36.5]
+      ]
+    ]
+  },
+  "bbox": [92.0, 36.5, 94.2, 38.0],
+  "properties": {},
+  "assets": {
+    "data": {
+      "href": "s3://eo-tools-runtime/example-item-001.tif",
+      "type": "image/tiff; application=geotiff; profile=cloud-optimized",
+      "roles": ["data"],
+      "title": "Example raster"
+    }
+  },
+  "upsert": true
+}
+
+### Raster - stack
+# http/https inputs can be downloaded with the default Store fetcher.
+# s3:// inputs require serving runtime with --store-config. Raster output_file
+# must be a local or relative path.
+# @timeout 20 m
+POST {{baseUrl}}/raster/stack
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "input_files": [
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B11.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B08.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B04.tif"
+  ],
+  "output_file": "s3://geosprite/eo/raster/stack/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/SNR.tif",
+  "overwrite": false,
+  "publish_catalog": false,
+  "presign_url": true,
+  "presign_expires_in": 3600
+}
+
+### Raster - stack RGB equivalent
+# RGB ordering is controlled by the order of input_files. JPEG_COG writes an
+# 8-bit RGB JPEG-compressed COG for compact visual products.
+# @timeout 20m
+POST {{baseUrl}}/raster/stack_rgb
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "input_files": [
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B04.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B03.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B02.tif"
+  ],
+  "output_file": "s3://geosprite/eo/raster/stack/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/TCI.tif",
+  "overwrite": true,
+  "publish_catalog": false,
+  "presign_url": true,
+  "presign_expires_in": 3600
+}
+
+### Raster - compose median
+# @timeout 20m
+POST {{baseUrl}}/raster/compose
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "input_files": [
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B04.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B03.tif",
+    "https://sentinel-cogs.s3.us-west-2.amazonaws.com/sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/B02.tif"
+  ],
+  "output_file": "sentinel-s2-l2a-cogs/50/S/NA/2025/8/S2C_50SNA_20250828_0_L2A/MEDIAN.tif",
+  "method": "median",
+  "overwrite": true,
+  "publish_catalog": false,
+  "presign_url": false,
+  "presign_expires_in": 3600
+}
+
+### SNAP - Sentinel-1 preprocessing
+# Requires serving runtime with the SNAP tool package and ESA SNAP/snappy runtime.
+# input_dir can point to a Sentinel-1 SAFE directory; when provided, required
+# manifest, measurement, annotation, calibration, and noise files are derived.
+# @timeout 60m
+POST {{baseUrl}}/snap/sentinel1
+Accept: application/json
+Content-Type: application/json
+x-run-id: {{runId}}
+
+{
+  "publish_catalog": false,
+  "overwrite": false,
+  "presign_url": true,
+  "presign_expires_in": 3600,
+  "manifest_file": "https://sentinel-s1-l1c.s3.amazonaws.com/GRD/2021/8/22/IW/DV/S1A_IW_GRDH_1SDV_20210822T100534_20210822T100559_039341_04A572_C316/manifest.safe",
+  "output_dir": "s3://geosprite/eo/snap/sentinel1/https-sentinel-s1-l1c.s3.amazonaws.com/GRD/2021/8/22/IW/DV/S1A_IW_GRDH_1SDV_20210822T100534_20210822T100559_039341_04A572_C316"
+}
+
+### Notes
+# Not ported here:
+# - Postman "Catalog/Get Item": there is no registered eo-tools-runtime catalog.get_item tool yet.
+# - Postman AI, Job, Titiler, ingest, mosaicjson endpoints are service-specific legacy APIs,
+#   not tools currently exposed by eo-tools-runtime.
