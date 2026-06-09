@@ -39,7 +39,8 @@ From the repository root:
 .\eo-tools\tools\eo-tools-snap\deploy\scripts\deploy-snap.ps1 `
   -SshHost jsong@10.168.162.111 `
   -K3sNodeIp 10.168.162.111 `
-  -RegistryHost 10.168.162.111:5000
+  -RegistryHost 10.168.162.111:5000 `
+  -ImageTag 0.1.1
 ```
 
 The script builds the image, pushes it to the registry, copies the rendered
