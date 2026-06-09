@@ -1,6 +1,6 @@
 # Copyright (c) GeoSprite. All rights reserved.
 #
-# Author: JH Zhang
+# Author: Jia Song
 #
 
 """
@@ -9,6 +9,10 @@ Requires ESA SNAP with snappy Python bindings
 """
 
 import os
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+from geosprite.eo.io.raster import convert_to_cog
 
 try:
     from esa_snappy import GPF, HashMap, ProductIO, jpy
@@ -21,20 +25,6 @@ except ImportError as exc:
 else:
     _SNAP_IMPORT_ERROR = None
 
-
-def output_files(
-    input_file: str,
-    polar_list: list[str],
-    output_dir: str,
-    prefix: str = "iw-",
-) -> list[str]:
-    resolved_dir = os.path.join(output_dir, os.path.dirname(input_file))
-    os.makedirs(resolved_dir, exist_ok=True)
-
-    return [
-        os.path.join(resolved_dir, prefix + pol.lower() + ".tif")
-        for pol in polar_list
-    ]
 
 def preprocess(
     input_file: str,
@@ -62,7 +52,14 @@ def preprocess(
             "Please install SNAP and configure snappy Python bindings."
         ) from _SNAP_IMPORT_ERROR
 
-    outputs = output_files(input_file, polar_list, output_dir)
+    resolved_dir = os.path.abspath(output_dir)
+    os.makedirs(resolved_dir, exist_ok=True)
+    prefix: str = "iw-"
+
+    outputs = [
+        os.path.join(resolved_dir, prefix + pol.lower() + ".tif")
+        for pol in polar_list
+    ]
 
     for pol, output_file in zip(polar_list, outputs):
         print("Processing Sentinel-1 data:")
@@ -86,8 +83,17 @@ def preprocess(
         p = _linear_to_from_db(p)
         p = _to_int16(p, jpy)
 
-        print("  [SNAP] Writing intermediate file...")
-        ProductIO.writeProduct(p, output_file, "GeoTiff")
+        output_path = Path(output_file)
+
+        with TemporaryDirectory(
+            prefix="geosprite-snap-s1-",
+            dir=str(output_path.parent),
+        ) as temp_dir:
+            intermediate_file = Path(temp_dir) / output_path.name
+            print("  [SNAP] Writing intermediate GeoTIFF...")
+            ProductIO.writeProduct(p, str(intermediate_file), "GeoTiff")
+            print("  [GDAL] Translating GeoTIFF to COG...")
+            convert_to_cog(str(intermediate_file), output_file)
 
     return outputs
 
@@ -205,105 +211,4 @@ def _to_int16(source, jpy):
     return GPF.createProduct("BandMaths", parameters, source)
 
 
-__all__ = ["preprocess", "output_files", "output_filenames"]
-
-# def _remove_outer_border(tif_path, nodata_val=-32768):
-#     """
-#     去除外部边框（内存安全版）
-#     """
-#     if gdal is None or ogr is None:
-#         return
-#
-#     try:
-#         ds = gdal.Open(tif_path, gdal.GA_Update)
-#         if not ds:
-#             return
-#
-#         band = ds.GetRasterBand(1)
-#         x_size, y_size = ds.RasterXSize, ds.RasterYSize
-#
-#         # 读取数据 (这里需要约 1.2GB 内存)
-#         data = band.ReadAsArray()
-#
-#         # 【修改点 2】内存爆炸的核心修复
-#         # 如果没有 numpy，就用原始方式（但可能会爆内存）
-#         # 如果有 numpy，强制使用 uint8 (1字节) 而不是 int64 (8字节)
-#         if np is not None:
-#             # 使用 np.uint8，内存占用仅为原来的 1/8
-#             mask_array = (data != 0).astype(np.uint8)
-#         else:
-#             # 只有在万不得已时才用这个，容易导致 MemoryError
-#             mask_array = (data != 0) * 1
-#
-#             # 创建内存掩膜
-#         drv_mem = gdal.GetDriverByName('MEM')
-#         mask_ds = drv_mem.Create('', x_size, y_size, 1, gdal.GDT_Byte)
-#         mask_ds.SetGeoTransform(ds.GetGeoTransform())
-#         mask_ds.SetProjection(ds.GetProjection())
-#         mask_ds.GetRasterBand(1).WriteArray(mask_array)
-#
-#         # 既然已经写入了 GDAL MEM，Python 里的 mask_array 就可以删了，释放内存
-#         del mask_array
-#
-#         # 栅格转矢量
-#         ogr_ds = ogr.GetDriverByName('Memory').CreateDataSource('mask_vec')
-#         src_layer = ogr_ds.CreateLayer('src', srs=osr.SpatialReference(wkt=ds.GetProjection()))
-#         fd = ogr.FieldDefn('PixelVal', ogr.OFTInteger)
-#         src_layer.CreateField(fd)
-#
-#         gdal.Polygonize(mask_ds.GetRasterBand(1), mask_ds.GetRasterBand(1), src_layer, 0, [], callback=None)
-#
-#         # 提取外轮廓
-#         filled_layer = ogr_ds.CreateLayer('filled', srs=osr.SpatialReference(wkt=ds.GetProjection()))
-#
-#         has_polygons = False
-#         for feature in src_layer:
-#             geom = feature.GetGeometryRef()
-#             if not geom: continue
-#
-#             if geom.GetGeometryName() == 'MULTIPOLYGON':
-#                 new_geom = ogr.Geometry(ogr.wkbMultiPolygon)
-#                 for i in range(geom.GetGeometryCount()):
-#                     poly = geom.GetGeometryRef(i)
-#                     new_poly = ogr.Geometry(ogr.wkbPolygon)
-#                     new_poly.AddGeometry(poly.GetGeometryRef(0))
-#                     new_geom.AddGeometry(new_poly)
-#             elif geom.GetGeometryName() == 'POLYGON':
-#                 new_geom = ogr.Geometry(ogr.wkbPolygon)
-#                 new_geom.AddGeometry(geom.GetGeometryRef(0))
-#             else:
-#                 continue
-#
-#             new_feat = ogr.Feature(filled_layer.GetLayerDefn())
-#             new_feat.SetGeometry(new_geom)
-#             filled_layer.CreateFeature(new_feat)
-#             has_polygons = True
-#
-#         if not has_polygons:
-#             print("  ⚠ Warning: No valid data found to process.")
-#             ds = None
-#             return
-#
-#         # 转回栅格掩膜
-#         mask_ds.GetRasterBand(1).Fill(0)
-#         gdal.RasterizeLayer(mask_ds, [1], filled_layer, burn_values=[1])
-#
-#         final_mask = mask_ds.GetRasterBand(1).ReadAsArray()
-#
-#         # 清理掉不再需要的对象
-#         mask_ds = None
-#         ogr_ds = None
-#
-#         # 应用修改：外部设为 NoData
-#         data[(final_mask == 0)] = nodata_val
-#
-#         band.WriteArray(data)
-#         band.SetNoDataValue(nodata_val)
-#
-#         ds.FlushCache()
-#         ds = None
-#         print("  ✓ Border removed successfully.")
-#
-#     except Exception as e:
-#         print(f"  ⚠ Warning: Failed to remove outer border: {e}")
-#
+__all__ = ["preprocess"]

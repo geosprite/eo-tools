@@ -146,7 +146,7 @@ class SNAPSentinel1Tool(Tool[SNAPSentinel1In, SNAPSentinel1Out]):
             lambda: preprocess(
                 inputs.input_files[0],
                 polarizations,
-                inputs.output_dir,
+                str(output.local_path.parent)
             ),
         )
 
