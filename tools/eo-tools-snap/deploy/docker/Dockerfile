@@ -1,13 +1,5 @@
 # syntax=docker/dockerfile:1.7
-FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
-
-ARG SNAP_INSTALLER=esa-snap_sentinel_linux-13.0.0.sh
-ARG SNAP_INSTALLER_URL=https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_linux-13.0.0.sh
-
-ENV SNAP_HOME=/opt/snap \
-    PATH="/opt/venv/bin:/opt/snap/bin:$PATH" \
-    PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS builder
 
 WORKDIR /src
 
@@ -15,47 +7,46 @@ WORKDIR /src
 # docker build -f eo-tools/tools/eo-tools-snap/deploy/docker/Dockerfile .
 COPY eo-tools ./eo-tools
 COPY eo-io ./eo-io
-COPY eo-raster ./eo-raster
 COPY eo-store ./eo-store
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        aria2 \
-        bash \
-        build-essential \
-        ca-certificates \
-        coreutils \
-        curl \
-        fontconfig \
         gdal-bin \
-        libfreetype6 \
-        libgdal32 \
-        libx11-6 \
-        libxext6 \
-        libxi6 \
-        libxrender1 \
-        libxtst6 \
-        libgdal-dev \
         python3 \
-        python3-dev \
         python3-gdal \
         python3-venv \
-        wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN uv venv --python /usr/bin/python3 --system-site-packages /opt/venv
 
+ENV PATH="/opt/venv/bin:$PATH"
+
 RUN uv pip install --no-config --no-sources --no-cache \
         "numpy<2" \
-        "GDAL==$(gdal-config --version)" \
+        shapely \
         "./eo-store[s3,aria2]" \
-        ./eo-io \
-        ./eo-raster \
         ./eo-tools/core \
-        "./eo-tools/runtime[all]"
+        "./eo-tools/runtime[all]" \
+        esa-snappy
 
 RUN uv pip install --no-config --no-sources --no-cache --no-deps \
+        ./eo-io \
         ./eo-tools/tools/eo-tools-snap
+
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS snap-builder
+
+ARG SNAP_INSTALLER=esa-snap_sentinel_linux-13.0.0.sh
+ARG SNAP_INSTALLER_URL=https://download.esa.int/step/snap/13.0/installers/esa-snap_sentinel_linux-13.0.0.sh
+
+ENV SNAP_HOME=/opt/snap
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        bash \
+        ca-certificates \
+        coreutils \
+        wget \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,source=eo-tools/tools/eo-tools-snap/deploy/docker,target=/snap-docker-assets,ro \
     if [ -f "/snap-docker-assets/$SNAP_INSTALLER" ]; then \
@@ -66,15 +57,43 @@ RUN --mount=type=bind,source=eo-tools/tools/eo-tools-snap/deploy/docker,target=/
         wget -q -O /tmp/esa-snap.sh "$SNAP_INSTALLER_URL"; \
     fi \
     && bash /tmp/esa-snap.sh -q -dir "$SNAP_HOME" \
-    && rm /tmp/esa-snap.sh \
-    && uv pip install --no-config --no-cache esa-snappy \
-    && cd "$SNAP_HOME/bin" \
-    && timeout 600 ./snappy-conf /opt/venv/bin/python || true \
-    && python -c "import esa_snappy; from esa_snappy import ProductIO"
+    && rm /tmp/esa-snap.sh
 
-RUN useradd --system --uid 10001 --create-home eo \
+FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+
+ENV SNAP_HOME=/opt/snap \
+    PATH="/opt/venv/bin:/opt/snap/bin:$PATH" \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        aria2 \
+        bash \
+        ca-certificates \
+        fontconfig \
+        gdal-bin \
+        libfreetype6 \
+        libgdal32 \
+        libx11-6 \
+        libxext6 \
+        libxi6 \
+        libxrender1 \
+        libxtst6 \
+        python3 \
+        python3-gdal \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --system --uid 10001 --create-home eo \
     && mkdir -p /work/runtime /work/aria2 \
     && chown -R eo:eo /work /home/eo
+
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=snap-builder /opt/snap /opt/snap
+
+RUN cd "$SNAP_HOME/bin" \
+    && timeout 600 ./snappy-conf /opt/venv/bin/python || true \
+    && python -c "import esa_snappy; from esa_snappy import ProductIO" \
+    && python -c "from osgeo import gdal, gdal_array; import geosprite.eo.io.raster; print(gdal.VersionInfo())"
 
 USER eo
 WORKDIR /work

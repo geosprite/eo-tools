@@ -44,7 +44,7 @@ stringData:
         "input_parameter": "input_files",
         "preserve_path_structure": true,
         "bucket": "geosprite",
-        "prefix": "",
+        "prefix": "sat",
         "temp_dir_prefix": null
       }
     }
@@ -111,25 +111,25 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 5
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 3
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 20
-            periodSeconds: 20
-            timeoutSeconds: 3
-            failureThreshold: 3
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 5
           resources:
             requests:
-              cpu: 500m
-              memory: 1Gi
+              cpu: "1"
+              memory: 2Gi
             limits:
-              cpu: "2"
-              memory: 4Gi
+              cpu: "4"
+              memory: 12Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false

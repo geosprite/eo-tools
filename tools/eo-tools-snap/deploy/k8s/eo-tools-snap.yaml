@@ -43,8 +43,8 @@ stringData:
       "localization": {
         "input_parameter": "input_files",
         "preserve_path_structure": true,
-        "bucket": null,
-        "prefix": "",
+        "bucket": "geosprite",
+        "prefix": "sat",
         "temp_dir_prefix": null
       }
     }
@@ -111,25 +111,25 @@ spec:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 10
-            periodSeconds: 10
-            timeoutSeconds: 3
-            failureThreshold: 6
+            initialDelaySeconds: 20
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 5
           livenessProbe:
             httpGet:
               path: /health
               port: http
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90
             periodSeconds: 30
-            timeoutSeconds: 3
-            failureThreshold: 3
+            timeoutSeconds: 10
+            failureThreshold: 5
           resources:
             requests:
-              cpu: 500m
-              memory: 2Gi
-            limits:
-              cpu: "4"
+              cpu: "2"
               memory: 16Gi
+            limits:
+              cpu: "8"
+              memory: 32Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: false
@@ -197,6 +197,8 @@ metadata:
   labels:
     app.kubernetes.io/name: eo-tools-snap
     app.kubernetes.io/part-of: eo-tools
+  annotations:
+    traefik.ingress.kubernetes.io/service.serverstransport: eo-tools-eo-tools-snap-timeouts@kubernetescrd
 spec:
   type: ClusterIP
   selector:
@@ -205,6 +207,20 @@ spec:
     - name: http
       port: 80
       targetPort: http
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: eo-tools-snap-timeouts
+  namespace: eo-tools
+  labels:
+    app.kubernetes.io/name: eo-tools-snap
+    app.kubernetes.io/part-of: eo-tools
+spec:
+  forwardingTimeouts:
+    dialTimeout: 30s
+    responseHeaderTimeout: 30m
+    idleConnTimeout: 30m
 ---
 apiVersion: traefik.io/v1alpha1
 kind: Middleware

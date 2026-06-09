@@ -12,7 +12,6 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = [
     "eo-io",
-    "eo-raster",
     "eo-store",
     "eo-tools-core",
 ]
@@ -28,6 +27,5 @@ packages = ["src/geosprite"]
 
 [tool.uv.sources]
 eo-io = { workspace = true }
-eo-raster = { workspace = true }
 eo-store = { workspace = true }
 eo-tools-core = { workspace = true }
