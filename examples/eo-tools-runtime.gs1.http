@@ -275,7 +275,7 @@ x-run-id: {{runId}}
 
 {
   "publish_catalog": false,
-  "overwrite": false,
+  "overwrite": true,
   "presign_url": true,
   "presign_expires_in": 3600,
   "manifest_file": "https://sentinel-s1-l1c.s3.amazonaws.com/GRD/2021/8/22/IW/DV/S1A_IW_GRDH_1SDV_20210822T100534_20210822T100559_039341_04A572_C316/manifest.safe",
