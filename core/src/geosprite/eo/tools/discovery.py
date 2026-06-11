@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import pkgutil
 from collections.abc import Iterable
 from functools import partial
 from importlib.metadata import entry_points
@@ -36,19 +37,58 @@ def _iter_tool_modules(
     excluded_modules: set[str] | None = None,
 ) -> Iterable[str]:
     """Yield importable module names under a package that may contain tools."""
-    package_dir = Path(package_file).resolve().parent
     excluded = DEFAULT_EXCLUDED_MODULES | (excluded_modules or set())
 
-    for module_file in sorted(package_dir.rglob("*.py")):
-        relative_module = module_file.relative_to(package_dir).with_suffix("")
-        parts = relative_module.parts
-        if (
+    def _skip_module(parts: tuple[str, ...]) -> bool:
+        return (
             parts[-1] == "__init__"
             or any(part in excluded for part in parts)
             or any(part.endswith("_common") for part in parts)
-        ):
-            continue
-        yield ".".join((package_name, *parts))
+        )
+
+    package_path = Path(package_file).resolve()
+    source_dir: Path | None = None
+    if package_path.is_dir():
+        source_dir = package_path
+    elif package_path.suffix == ".py":
+        source_dir = package_path.parent
+
+    py_files = list(source_dir.rglob("*.py")) if source_dir else []
+
+    if py_files:
+        for module_file in sorted(py_files):
+            relative_module = module_file.relative_to(source_dir).with_suffix("")
+            parts = relative_module.parts
+            if _skip_module(parts):
+                continue
+            yield ".".join((package_name, *parts))
+        return
+
+    package = importlib.import_module(package_name)
+    package_paths = getattr(package, "__path__", None)
+    if not package_paths:
+        return
+
+    def _iter_compiled_modules(
+        search_paths: Iterable[str],
+        parent_parts: tuple[str, ...] = (),
+    ) -> Iterable[str]:
+        for module_info in pkgutil.iter_modules(search_paths):
+            parts = (*parent_parts, module_info.name)
+            if _skip_module(parts):
+                continue
+
+            module_name = ".".join((package_name, *parts))
+            if not module_info.ispkg:
+                yield module_name
+                continue
+
+            subpackage = importlib.import_module(module_name)
+            subpackage_paths = getattr(subpackage, "__path__", None)
+            if subpackage_paths:
+                yield from _iter_compiled_modules(subpackage_paths, parts)
+
+    yield from _iter_compiled_modules(package_paths)
 
 
 def _discover_tool_classes(
