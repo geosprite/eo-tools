@@ -1,51 +1,77 @@
-"""Helpers for tool discovery and registration."""
-
 from __future__ import annotations
 
 import importlib
+import logging
 import pkgutil
 from collections.abc import Iterable
 from functools import partial
 from importlib.metadata import entry_points
 from pathlib import Path
 from types import ModuleType
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from .registry import ToolRegistry
 from .tool import Tool
 
 T = TypeVar("T", bound=type[Tool])
+logger = logging.getLogger(__name__)
 
 DEFAULT_EXCLUDED_MODULES = {"common", "core", "geometry", "registry"}
 DEFAULT_ENTRY_POINT_GROUP = "geosprite.eo.tools"
 
 
+_TOOL_CLASSES: list[type[Tool]] = []
+_DISCOVERED_PACKAGES: set[tuple[str, str]] = set()
+
+
 def _register_tool_class(classes: list[type[Tool]], cls: T) -> T:
     """Append a tool class to a package-local class list once."""
     tool_name = getattr(cls, "name", None)
-    if cls not in classes and not any(
-        getattr(existing, "name", None) == tool_name for existing in classes
-    ):
+    if cls not in classes and not any(getattr(existing, "name", None) == tool_name for existing in classes):
         classes.append(cls)
     return cls
 
 
+tool = partial(_register_tool_class, _TOOL_CLASSES)
+
+
+def _iter_compiled_modules(
+    package_name: str,
+    search_paths: Iterable[str],
+    parent_parts: tuple[str, ...] = (),
+    excluded: set[str] | None = None
+) -> Iterable[str]:
+    """Recursively scan for submodules in sourceless (compiled/packaged) environments."""
+    for module_info in pkgutil.iter_modules(search_paths):
+        parts = (*parent_parts, module_info.name)
+
+        # Unified filtering: exclude __init__, blacklisted items, and modules ending with _common
+        if parts[-1] == "__init__" or any(p in (excluded or set()) for p in parts) or any(
+                p.endswith("_common") for p in parts):
+            continue
+
+        module_name = ".".join((package_name, *parts))
+        if not module_info.ispkg:
+            yield module_name
+        else:
+            # Only import the subpackage when encountered to retrieve its nested __path__
+            try:
+                subpackage = importlib.import_module(module_name)
+                subpackage_paths = getattr(subpackage, "__path__", None)
+                if subpackage_paths:
+                    iterable_paths = cast(Iterable[str], subpackage_paths)
+                    yield from _iter_compiled_modules(package_name, iterable_paths, parts, excluded)
+            except ImportError:
+                continue
+
+
 def _iter_tool_modules(
-    *,
     package_name: str,
     package_file: str,
-    excluded_modules: set[str] | None = None,
+    excluded_modules: set[str] | None = None
 ) -> Iterable[str]:
-    """Yield importable module names under a package that may contain tools."""
+    """Dual-track module scanner: source mode preferred, fallback to compiled mode."""
     excluded = DEFAULT_EXCLUDED_MODULES | (excluded_modules or set())
-
-    def _skip_module(parts: tuple[str, ...]) -> bool:
-        return (
-            parts[-1] == "__init__"
-            or any(part in excluded for part in parts)
-            or any(part.endswith("_common") for part in parts)
-        )
-
     package_path = Path(package_file).resolve()
     source_dir: Path | None = None
     if package_path.is_dir():
@@ -53,151 +79,26 @@ def _iter_tool_modules(
     elif package_path.suffix == ".py":
         source_dir = package_path.parent
 
-    py_files = list(source_dir.rglob("*.py")) if source_dir else []
-
+    # Track 1: Source mode (uses efficient Path scanning if .py files exist)
+    py_files = sorted(source_dir.rglob("*.py")) if source_dir and source_dir.exists() else []
     if py_files:
-        for module_file in sorted(py_files):
-            relative_module = module_file.relative_to(source_dir).with_suffix("")
-            parts = relative_module.parts
-            if _skip_module(parts):
+        for module_file in py_files:
+            relative_parts = module_file.relative_to(source_dir).with_suffix("").parts
+            if relative_parts[-1] == "__init__" or any(p in excluded for p in relative_parts) or any(
+                    p.endswith("_common") for p in relative_parts):
                 continue
-            yield ".".join((package_name, *parts))
+            yield ".".join((package_name, *relative_parts))
         return
 
-    package = importlib.import_module(package_name)
-    package_paths = getattr(package, "__path__", None)
-    if not package_paths:
+    # Track 2: Compiled, sourceless, or packaged deployment mode (fallback)
+    try:
+        package = importlib.import_module(package_name)
+        package_paths = getattr(package, "__path__", None)
+        if package_paths:
+            iterable_paths = cast(Iterable[str], package_paths)
+            yield from _iter_compiled_modules(package_name, iterable_paths, excluded=excluded)
+    except ImportError:
         return
-
-    def _iter_compiled_modules(
-        search_paths: Iterable[str],
-        parent_parts: tuple[str, ...] = (),
-    ) -> Iterable[str]:
-        for module_info in pkgutil.iter_modules(search_paths):
-            parts = (*parent_parts, module_info.name)
-            if _skip_module(parts):
-                continue
-
-            module_name = ".".join((package_name, *parts))
-            if not module_info.ispkg:
-                yield module_name
-                continue
-
-            subpackage = importlib.import_module(module_name)
-            subpackage_paths = getattr(subpackage, "__path__", None)
-            if subpackage_paths:
-                yield from _iter_compiled_modules(subpackage_paths, parts)
-
-    yield from _iter_compiled_modules(package_paths)
-
-
-def _discover_tool_classes(
-    *,
-    package_name: str,
-    package_file: str,
-    classes: list[type[Tool]],
-    discovered: bool,
-    excluded_modules: set[str] | None = None,
-) -> bool:
-    """Import candidate modules once so decorators can populate ``classes``."""
-    if discovered:
-        return True
-    for module_name in sorted(
-        _iter_tool_modules(
-            package_name=package_name,
-            package_file=package_file,
-            excluded_modules=excluded_modules,
-        )
-    ):
-        importlib.import_module(module_name)
-    return True
-
-
-def _instantiate_tools(classes: Iterable[type[Tool]]) -> list[Tool]:
-    """Create fresh tool instances from registered classes."""
-    return [tool_cls() for tool_cls in classes]
-
-
-def _build_registry(tools: Iterable[Tool]) -> ToolRegistry:
-    """Build a ToolRegistry from discovered tool instances."""
-    registry = ToolRegistry()
-    for tool in tools:
-        registry.register(tool)
-    return registry
-
-
-_TOOL_CLASSES: list[type[Tool]] = []
-_DISCOVERED_PACKAGES: set[tuple[str, str]] = set()
-
-tool = partial(_register_tool_class, _TOOL_CLASSES)
-
-
-def _resolve_package(
-    package: str | ModuleType,
-    package_file: str | None = None,
-) -> tuple[str, str]:
-    if isinstance(package, ModuleType):
-        package_name = package.__name__
-        resolved_file = getattr(package, "__file__", None)
-    else:
-        package_name = package
-        resolved_file = package_file
-        if resolved_file is None:
-            resolved_file = getattr(
-                importlib.import_module(package_name),
-                "__file__",
-                None,
-            )
-
-    if resolved_file is None:
-        raise ValueError(f"Package {package_name!r} does not expose a `__file__`.")
-    return package_name, resolved_file
-
-
-def _is_tool_class_in_package(tool_cls: type[Tool], package_name: str) -> bool:
-    module_name = getattr(tool_cls, "__module__", "")
-    return module_name == package_name or module_name.startswith(f"{package_name}.")
-
-
-def _discover_package_classes(
-    *,
-    package_name: str,
-    package_file: str,
-    excluded_modules: set[str] | None = None,
-) -> list[type[Tool]]:
-    package_key = (package_name, str(Path(package_file).resolve()))
-    if package_key not in _DISCOVERED_PACKAGES:
-        _discover_tool_classes(
-            package_name=package_name,
-            package_file=package_file,
-            classes=_TOOL_CLASSES,
-            discovered=False,
-            excluded_modules=excluded_modules,
-        )
-        _DISCOVERED_PACKAGES.add(package_key)
-    return [
-        tool_cls
-        for tool_cls in _TOOL_CLASSES
-        if _is_tool_class_in_package(tool_cls, package_name)
-    ]
-
-
-def _discover_package_tools(
-    package: str | ModuleType,
-    package_file: str | None = None,
-    *,
-    excluded_modules: set[str] | None = None,
-) -> list[Tool]:
-    """Import one tool package and instantiate only tools defined under it."""
-
-    package_name, resolved_file = _resolve_package(package, package_file)
-    return _instantiate_tools(
-        _discover_package_classes(
-            package_name=package_name,
-            package_file=resolved_file,
-            excluded_modules=excluded_modules,
-        )
-    )
 
 
 def build_registry_from_package(
@@ -206,58 +107,69 @@ def build_registry_from_package(
     *,
     excluded_modules: set[str] | None = None,
 ) -> ToolRegistry:
-    """Build a ToolRegistry from one package-scoped discovery target."""
+    """Discover, import, and build a ToolRegistry from a single target package."""
 
-    return _build_registry(
-        _discover_package_tools(
-            package,
-            package_file,
-            excluded_modules=excluded_modules,
-        )
-    )
+    # 1. Resolve package name and file path
+    if isinstance(package, ModuleType):
+        package_name = package.__name__
+        resolved_file = getattr(package, "__file__", None)
+    else:
+        package_name = package
+        resolved_file = package_file or getattr(importlib.import_module(package_name), "__file__", None)
+
+    if resolved_file is None:
+        raise ValueError(f"Package {package_name!r} does not expose a `__file__`.")
+
+    # 2. Prevent duplicate scanning of the same package target
+    package_key = (package_name, str(Path(resolved_file).resolve()))
+    if package_key not in _DISCOVERED_PACKAGES:
+        for module_name in _iter_tool_modules(package_name, resolved_file, excluded_modules):
+            try:
+                importlib.import_module(module_name)
+            except ImportError as e:
+                logger.warning(f"Failed to import tool module {module_name!r}: {e}")
+        _DISCOVERED_PACKAGES.add(package_key)
+
+    # 3. Filter tool classes belonging to the current package, instantiate, and load into registry
+    registry = ToolRegistry()
+    for tool_cls in _TOOL_CLASSES:
+        mod_name = getattr(tool_cls, "__module__", "")
+        if mod_name == package_name or mod_name.startswith(f"{package_name}."):
+            registry.register(tool_cls())
+
+    return registry
 
 
-def _coerce_registry_source(source: Any, *, source_name: str) -> ToolRegistry:
-    """Build a ToolRegistry from an entry point target."""
-
+def _coerce_registry_source(source: Any, source_name: str) -> ToolRegistry:
+    """Coerce various loaded entry point object types into a standard ToolRegistry."""
     if isinstance(source, ToolRegistry):
         return source
-
     if isinstance(source, ModuleType):
         return build_registry_from_package(source)
-
     if callable(source):
         result = source()
         if isinstance(result, ToolRegistry):
             return result
         if isinstance(result, Iterable):
-            return _build_registry(result)
+            registry = ToolRegistry()
+            for t in result:
+                registry.register(t)
+            return registry
 
-    raise TypeError(
-        f"Entry point {source_name!r} must load a ToolRegistry, a callable "
-        "returning a ToolRegistry or tools, or a tool package module."
-    )
+    raise TypeError(f"Entry point {source_name!r} returned an invalid type: {type(source).__name__}")
 
 
-def build_registry_from_entry_points(
-    group: str = DEFAULT_ENTRY_POINT_GROUP,
-) -> ToolRegistry:
-    """Discover installed tool packages from Python entry points."""
-
+def build_registry_from_entry_points(group: str = DEFAULT_ENTRY_POINT_GROUP) -> ToolRegistry:
+    """Discover installed tool packages from Python entry points and build a global registry."""
     discovered = entry_points(group=group)
     if not discovered:
-        raise ValueError(
-            f"No eo-tools entry points found in group {group!r}. "
-            "Install an eo-tools plugin package that declares this entry point group."
-        )
+        raise ValueError(f"No eo-tools entry points found in group {group!r}.")
 
     registry = ToolRegistry()
     for entry_point in discovered:
-        source_registry = _coerce_registry_source(
-            entry_point.load(),
-            source_name=f"{entry_point.group}:{entry_point.name}",
-        )
+        source_registry = _coerce_registry_source(entry_point.load(), f"{entry_point.group}:{entry_point.name}")
         for tool_instance in source_registry:
             if tool_instance.name not in registry:
                 registry.register(tool_instance)
+
     return registry
